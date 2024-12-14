@@ -1,0 +1,75 @@
+version: '3.11'
+
+
+services:
+  bot:
+    build:
+        context: ./config
+    container_name: tg_bot
+    env_file:
+        - .env
+    depends_on:
+      - pg
+      - redis
+    volumes: &shared_volumes
+      - ./config:/usr/src/app
+
+    command: python manage.py bot
+
+
+
+  django:
+    build:
+      context: ./config
+    container_name: django
+    env_file:
+      - .env
+    depends_on:
+      - pg
+      - redis
+    volumes: *shared_volumes
+    ports:
+      - 8000:8000
+
+    command: python manage.py runserver 0.0.0.0:8000
+
+
+  pg:
+    image: postgres:alpine
+    restart: always
+    container_name: postgresql
+    environment:
+      POSTGRES_PASSWORD: 1
+    ports:
+      - "5433:5433"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+
+  redis:
+    image: redis:alpine
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+        context: ./config
+
+    container_name: celery_worker
+    restart: always
+    command: celery --app=config worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    depends_on:
+      - pg
+      - redis
+    volumes: *shared_volumes
+
+
+volumes:
+  pg_data:
