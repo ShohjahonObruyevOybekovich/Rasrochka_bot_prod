@@ -19,7 +19,7 @@ from tg_bot.state.main import *
 from datetime import datetime
 import calendar
 
-from tg_bot.test import format_phone_number
+from tg_bot.test import format_phone_number, extract_payment_amount
 
 
 # Start of adding an order
@@ -149,6 +149,7 @@ async def rasrochka_handler(msg: Message, state: FSMContext) -> None:
 
     data = await state.get_data()
     data['rasrochka_muddati'] = msg.text
+
     await state.set_data(data)
 
     await state.set_state(Add_order.ustama)
@@ -168,10 +169,11 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
         return
 
     data = await state.get_data()
-    data['ustama'] = message.text
+    ustama = extract_payment_amount(message.text)
+    data['ustama'] = ustama
     await state.set_data(data)
 
-    if not message.text.isdigit():
+    if not ustama.is_integer():
         await message.answer("Bo'lib to'lash ustama foizini to'g'ri faqat raqam orqali kiriting:")
         await state.set_state(Add_order.ustama)
         return
@@ -220,16 +222,18 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             else:
                 payment_schedule.append(f"{payment_date.strftime('%d %B %Y')}: {rounded_monthly_payment:.2f}$")
 
-        # Prepare confirmation message
+        foiz_miqdori= price*(ustama/100)
         datas = [
             f"<b>Mijoz ismi:</b> {mijoz}",
             f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
             f"<b>Mahsulotlar:</b> {data.get('product_name', 'N/A')}",
             f"<b>Mahsulot tan narxi:</b> {data.get('product_price', 'N/A')} $",
             f"<b>Boshlang'ich to'lov:</b> {data.get('avans', 'N/A')} $",
-            f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')}",
+            f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
             f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
-            f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida",
+            f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
+            f"<b>To'liq summa :</b>  {price + avans + foiz_miqdori:.2f} $\n"
+            f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
             f"<b>Jami ustama bilan hisoblangan narx:</b> {overall_payment:.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
@@ -284,23 +288,33 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     )
     # user.client = True
     # user.save()
+    price = Decimal(data.get("product_price", 0))
+    avans = Decimal(data.get("avans", 0))
+    ustama = Decimal(data.get("ustama", 0))
+    rasrochka_muddati_txt = data.get('rasrochka_muddati', '0').split(' ')[0]
+    rasrochka_months = int(rasrochka_muddati_txt)
 
+
+    overall_payment = (price - avans) + ((price - avans) * ustama) / 100
+    base_monthly_payment = overall_payment / rasrochka_months
+    rounded_monthly_payment = base_monthly_payment.quantize(Decimal('1'), rounding=ROUND_CEILING)
+    last_month_payment = overall_payment - rounded_monthly_payment * (rasrochka_months - 1)
 
     ic(user, user.chat_id)
     try:
         sms_service = SayqalSms()
         sms_service.send_sms(
-            message=f"Xurmatli mijoz sizning nomingizga muddatli to'lov evaziga {data['product_name']}\n do'konimiz tomonidan rasmiylashtirildi!\n"
-            f"To'liq ma'lumot olish uchun https://t.me/ecommerce_1_bot botimizdan ro'yxatdan o'ting!",
+            message=f"Buyurtma rasmiylashtirildi"
+                    f"Oylik to'lovingiz: {rounded_monthly_payment}$",
             number=data['phone'],
         )
         message = await call.bot.send_message(
             chat_id=user.chat_id,
-            text=f"Xurmatli mijoz sizning nomingizga muddatli to'lov evaziga {data['product_name']}\n do'konimiz tomonidan rasmiylashtirildi!\n"
-            f"Maxsulot nomi: {data['product_name']}\n"
-            f"Boshlang'ich to'lov: {data['avans']}$\n"
-            f"Bo'lib to'lash muddati: {rasrochka_muddati_txt} oy\n"
-            f"Birinchi to'lov sanasi:{pay[0]}"
+            text=f"Xurmatli mijoz sizning nomingizga muddatli to'lov evaziga  {data['product_name']}\n do'konimiz tomonidan rasmiylashtirildi!\n"
+            f"<b>Maxsulot nomi:</b> {data['product_name']}\n"
+            f"<b>Har oylik to'lov miqdori:</b> {rounded_monthly_payment}$\n"
+            f"<b>Bo'lib to'lash muddati:</b> {rasrochka_muddati_txt} oy\n"
+            f"<b>Birinchi to'lov sanasi:</b> {pay[0]}"
         )
 
 
@@ -329,14 +343,17 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
     edited_date = msg.text
 
-    if not edited_date.isdigit() or not (1 <= int(edited_date) <= 31):
+    # Validate that the date is a digit and between 1-31
+    if not (1 <= int(edited_date) <= 31):
         await msg.answer(
             "To'lov sanasini to'g'ri kiriting. Sana ikki xonali son ko'rinishida va faqat 1 dan 31 gacha bo'lishi shart!"
         )
         return
+    edited_date = extract_payment_amount(edited_date)
 
+    edited_date = int(edited_date)  # Convert to integer
     data["edited_date"] = edited_date
-    day = int(edited_date)
+    day = edited_date
 
     # Extract and validate payment data
     price = Decimal(data.get("product_price", 0))
@@ -365,10 +382,22 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
 
         for month in range(rasrochka_months):
             payment_date = start_date + relativedelta(months=month)
-            if day <= 28 or (payment_date.month in [4, 6, 9, 11] and day <= 30) or (payment_date.month == 2 and day <= 28):
-                payment_date = payment_date.replace(day=day)
+
+            # Adjust day for months with fewer than 31 days
+            if payment_date.month in [4, 6, 9, 11] and day > 30:
+                adjusted_day = 30
+            elif payment_date.month == 2:
+                # Handle February
+                if (payment_date.year % 4 == 0 and payment_date.year % 100 != 0) or (payment_date.year % 400 == 0):
+                    # Leap year
+                    adjusted_day = min(day, 29)
+                else:
+                    # Non-leap year
+                    adjusted_day = min(day, 28)
             else:
-                payment_date = payment_date.replace(day=min(day, 30))
+                adjusted_day = day
+
+            payment_date = payment_date.replace(day=adjusted_day)
 
             # Determine payment amount for the current month
             payment_amount = base_monthly_payment if month < rasrochka_months - 1 else last_month_payment
@@ -378,22 +407,23 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         await msg.answer(f"Xatolik yuz berdi: {str(e)}. Iltimos, qaytadan urinib ko'ring.")
         return
 
-    # Prepare the confirmation message
+    foiz_miqdori= price*(ustama/100)
     details = [
         f"<b>Mijoz ismi:</b> {data.get('full_name')}",
         f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
         f"<b>Mahsulotlar:</b> {data.get('product_name', 'N/A')}",
         f"<b>Mahsulot tan narxi:</b> {data.get('product_price', 'N/A')} $",
         f"<b>Boshlang'ich to'lov:</b> {data.get('avans', 'N/A')} $",
-        f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')}",
+        f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
         f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
+        f"<b>To'liq summa :</b>  {price + avans + foiz_miqdori:.2f} $\n"
+        f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
         f"<b>Jami ustama bilan hisoblangan narx:</b> {total_with_interest:.2f} $",
         f"\n\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),
     ]
 
     await msg.answer("\n".join(details), reply_markup=accept())
-
 
 @dp.callback_query(lambda call: call.data == "cancelled")
 async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:

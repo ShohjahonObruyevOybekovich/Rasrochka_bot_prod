@@ -71,9 +71,13 @@ async def command_start_handler(message: Message) -> None:
             "Mahsulotlar": "\n".join(
                 [f"{product.strip()} " for product in set(installment.product.split(","))]
             ),
-            "Asil narxi": f"{installment.price}$",
-            "Ustama bilan xisoblangan narxi": f"{overall_price + installment.starter_payment}$",
             "Avans": f"{installment.starter_payment}$",
+            "Ustama foizi" : f"{installment.additional_fee_percentage} %",
+            "Ustama miqdori" : f"{installment.price* (installment.additional_fee_percentage/100):.2f} $",
+            "Asil narxi": f"{installment.price}$",
+            "Ustama bilan xisoblangan narxi": f"{(overall_price + installment.starter_payment):.2f}$",
+            "To'liq so'mma " : f"{(installment.price + installment.price
+                                  * (installment.additional_fee_percentage/100)+installment.starter_payment):.2f}",
             "Jami to'langan so'mma": f"{total_paid}$",
             "To'lovlar": payment_history_str,
             "Payment Dates": "\n".join(payment_schedule),  # Add the generated payment dates to the Excel data

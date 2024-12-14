@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal, ROUND_CEILING
 from pyexpat.errors import messages
 
 from aiogram.fsm.context import FSMContext
@@ -102,35 +103,65 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         customer_name = order.user.full_name
         phone_number = order.user.phone
         products = order.product
-        product_price = order.price
-        starter_payment = order.starter_payment
+        product_price = Decimal(order.price)
+        starter_payment = Decimal(order.starter_payment)
         installment_period = order.payment_months
-        interest_rate = order.additional_fee_percentage
-        overall_price = (product_price-starter_payment) + ((product_price-starter_payment) * interest_rate / 100)
-        months_payment = overall_price / installment_period
+        interest_rate = Decimal(order.additional_fee_percentage)
+
+        foiz_miqdori = product_price *(interest_rate/100)
+
+        # Calculate overall payment
+        overall_price = (product_price - starter_payment) + ((product_price - starter_payment) * interest_rate / 100)
         total_paid = sum(p.amount for p in order.payments.all())
-        remaining_balance = order.calculate_overall_price() - total_paid
+        remaining_balance = overall_price - total_paid
 
-        today = datetime.today()
-        start_day = today.replace(day=1) + relativedelta(months=1)
+        # Calculate monthly payments
+        base_monthly_payment = overall_price / installment_period
+        rounded_monthly_payment = base_monthly_payment.quantize(Decimal('1'), rounding=ROUND_CEILING)
+        last_month_payment = overall_price - rounded_monthly_payment * (installment_period - 1)
+
+
         payment_schedule = []
-        for month in range(installment_period):
-            month_num = (start_day.month + month - 1) % 12 + 1
-            year_adjustment = (start_day.month + month - 1) // 12
-            payment_date = start_day.replace(year=start_day.year + year_adjustment, month=month_num)
-            payment_schedule.append(f"{payment_date.strftime('%d %B %Y')}: {months_payment:.2f}$")
+        applied_payments = Decimal(0)
+        start_day = order.start_date
 
+        for month in range(installment_period):
+            payment_date = start_day + relativedelta(months=month)
+
+            # Determine the expected payment for this month
+            expected_payment = last_month_payment if month == installment_period - 1 else rounded_monthly_payment
+
+            if applied_payments + expected_payment <= total_paid:
+                # Fully paid month
+                payment_status = "✅"
+                applied_payments += expected_payment
+            elif applied_payments < total_paid:
+                # Partially paid month
+                remaining_for_month = total_paid - applied_payments
+                payment_status = f"🟢 ({remaining_for_month:.2f} $ paid)"
+                applied_payments += remaining_for_month
+            else:
+                # Unpaid month
+                payment_status = "❗️"
+
+            # Add to payment schedule
+            payment_schedule.append(
+                f"{payment_date.strftime('%d.%m.%Y')}: {expected_payment:.2f}$ {payment_status}"
+            )
+        # Append order details
         order_details = (
                 f"<b>Mijoz ismi:</b>  {customer_name}\n"
                 f"<b>Telefon raqami:</b>  {phone_number}\n"
                 f"<b>Mahsulotlar:</b>  {products}\n"
-                f"<b>Mahsulot tan narxi:</b>  {product_price} $\n"
-                f"<b>Boshlang'ich to'lov:</b>  {starter_payment} $\n"
+                f"<b>Mahsulot tan narxi:</b>  {product_price:.2f} $\n"
+                f"<b>Boshlang'ich to'lov:</b>  {starter_payment:.2f} $\n"
                 f"<b>Rasrochka muddati:</b>  {installment_period} oylik\n"
-                f"<b>Qo'shilgan foiz:</b>  {interest_rate} %\n"
-                f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.strftime("%d")} da\n\n"
-                f"<b>Qolgan to'lov miqdori</b>  {round(remaining_balance,2)} $\n"
-                f"<b>Jami ustama bilan hisoblangan narx:</b>  {overall_price:.2f}$\n\n"
+                f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
+                f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
+                f"<b>To'liq summa :</b>  {product_price+starter_payment+foiz_miqdori:.2f} $\n"
+                f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
+                f"<b>Jami ustama bilan hisoblangan narx:</b>  {overall_price:.2f}$\n"
+                f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
                 f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
         )
         order_details_list.append(order_details)
@@ -197,6 +228,7 @@ async def handle_payment_amount(message: Message, state: FSMContext):
 
         total_paid = sum(p.amount for p in installment.payments.all())
         remaining_balance = installment.calculate_overall_price() - total_paid
+        remaining_balance = round(remaining_balance,1)
 
         if remaining_balance <= 0:
             installment.update_status()
@@ -208,13 +240,12 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                     text=f"Qarizdorlik yakunlandi!"
                 )
             else:
-                await message.answer("Mijoz qarizdorligi yakunlandi")
                 await message.answer("BU mijoz hali botdan foydalangani yo'q habarnoma sms orqali yuborildi!", reply_markup=admin_btn())
-            sms_service = SayqalSms()
-            sms_service.send_sms(
-                message="Qarizdorlik yakunlandi",
-                number=installment.user.phone
-            )
+            # sms_service = SayqalSms()
+            # sms_service.send_sms(
+            #     message="Qarizdorlik yakunlandi",
+            #     number=installment.user.phone
+            # )
 
 
         process_monthly_payment(
@@ -223,6 +254,7 @@ async def handle_payment_amount(message: Message, state: FSMContext):
             amount=amount,
         )
         user_chat_id = installment.user.chat_id
+        ic(user_chat_id)
         if user_chat_id:
             await message.answer(
                 f"To'lov qo'shildi: {amount} dollar.\nQolgan to'lov miqdori: {remaining_balance} dollar.",
@@ -239,17 +271,14 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                 f"To'lov qo'shildi: {amount} dollar.\nQolgan to'lov miqdori: {remaining_balance} dollar.",
                 reply_markup=admin_btn()
             )
-            await message.answer("BU mijoz hali botdan foydalangani yo'q habarnoma sms orqali yuborildi", reply_markup=admin_btn())
+            await message.answer("BU mijoz hali botdan foydalangani yo'q", reply_markup=admin_btn())
 
-        sms_service=SayqalSms()
-        sms_service.send_sms(
-            message=f"To'lov qo'shildi: {amount} dollar.\n"
-                    f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
-            number="+998908175047"
-        )
-
-
-
+        # sms_service=SayqalSms()
+        # sms_service.send_sms(
+        #     message=f"To'lov qo'shildi: {amount} dollar.\n"
+        #             f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
+        #     number="+998908175047"
+        # )
 
         await state.clear()
     except ValueError:
