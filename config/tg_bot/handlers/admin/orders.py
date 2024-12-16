@@ -199,8 +199,9 @@ async def handle_order_selection(callback_query: CallbackQuery, state: FSMContex
 @dp.message(PaymentFlow.enter_amount)
 async def handle_payment_amount(message: Message, state: FSMContext):
     if message.text == ortga:
-        await state.set_state(PaymentFlow.enter_amount)
-        await message.answer("To'lov miqdorini qayta kiriting $ qiymatida:", reply_markup=back())
+        # await state.set_state(PaymentFlow.enter_amount)
+        await message.answer("Admin_menu:", reply_markup=admin_btn())
+        state.clear()
         return
 
     amount = message.text.strip()
@@ -308,12 +309,9 @@ async def handle_edit_fee(callback_query: CallbackQuery, state: FSMContext):
 
 @dp.message(PaymentFlow.edit_fee)
 async def process_edit_fee(message: Message, state: FSMContext):
+    # await message.edit_reply_markup(reply_markup=None)
+    ic(message.text)
     if message.text == ortga:
-        data = await state.get_data()
-        user_id = data.get("user_id")
-        ic(user_id)
-
-        await message.edit_reply_markup(reply_markup=None)
         await message.answer(text="admin menu:", reply_markup=admin_btn())
         await state.clear()
         return
@@ -471,6 +469,7 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
                 chat_id=user_chat_id,
                 text="Sizning buyurtmangiz bekor qilindi va yakunlandi."
             )
+
     except Exception as e:
         await callback_query.message.answer(f"Xatolik yuz berdi: {str(e)}",reply_markup=admin_btn())
 
