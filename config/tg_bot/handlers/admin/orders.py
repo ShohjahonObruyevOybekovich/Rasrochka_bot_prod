@@ -47,15 +47,16 @@ async def search_customers(inline_query: InlineQuery):
     installments = await sync_to_async(Installment.objects.filter)(
         (Q(user__full_name__incontains=query) | Q(user__phone__icontains=query)) & Q(status="ACTIVE")
     )
+    user = User.objects.filter(phone=query,installments__status="ACTIVE").all()
 
-    for user in installments:
-        ic(user.id)
+    for users in user:
+        ic(users)
         results.append(
             InlineQueryResultArticle(
-                id=str(user.id),
-                title=f"{user.full_name} ({user.phone})",
+                id=str(users.id),
+                title=f"{users.full_name} ({users.phone})",
                 input_message_content=InputTextMessageContent(
-                    message_text=f"Tanlangan mijoz:\nID: {user.id} \n{user.full_name} ({user.phone})"
+                    message_text=f"Tanlangan mijoz:\nID: {users.id} \n{users.full_name} ({users.phone})"
                 ),
                 description="Mijoz haqida ma'lumotni ko'rish"
             )
@@ -79,6 +80,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
     if "ID:" in parts:
         phone_index = parts.index("ID:")  # Find the index of "Phone:"
         user_id:int = parts[phone_index + 1]
+        ic(user_id,phone_index)
 
     try:
         orders = Installment.objects.filter(user_id=user_id,status="ACTIVE")
@@ -108,7 +110,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         installment_period = order.payment_months
         interest_rate = Decimal(order.additional_fee_percentage)
 
-        foiz_miqdori = product_price *(interest_rate/100)
+        foiz_miqdori = (product_price-starter_payment) *(interest_rate/100)
 
         # Calculate overall payment
         overall_price = (product_price - starter_payment) + ((product_price - starter_payment) * interest_rate / 100)
@@ -158,7 +160,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
                 f"<b>Rasrochka muddati:</b>  {installment_period} oylik\n"
                 f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
                 f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
-                f"<b>To'liq summa :</b>  {product_price+starter_payment+foiz_miqdori:.2f} $\n"
+                f"<b>To'liq summa :</b>  {product_price-starter_payment+foiz_miqdori:.2f} $\n"
                 f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
                 f"<b>Jami ustama bilan hisoblangan narx:</b>  {overall_price:.2f}$\n"
                 f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"

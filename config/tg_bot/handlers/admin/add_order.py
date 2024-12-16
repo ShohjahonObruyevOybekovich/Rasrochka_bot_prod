@@ -125,20 +125,18 @@ async def avans_handler(message: Message, state: FSMContext) -> None:
         await message.answer("Buyurtma narxini qaytadan kiriting:", reply_markup=back())
         return
 
-    if (message.text.isalpha() or message.text.startswith('$') or message.text.endswith("$")
-            and (message.text != "O'tkazib yuborish ➡️" or message.text != ortga )):
-        await message.answer("Boshlang'ich to'lovni faqat raqamlar bilan $ hisobida kiriting !")
+
+    if message.text.isnumeric() and (message.text not in ["O'tkazib yuborish ➡️", ortga]):
+        data = await state.get_data()
+        data['avans'] = message.text if message.text != "O'tkazib yuborish ➡️" else '0'
+        await state.set_data(data)
+
+        await state.set_state(Add_order.rasrochka_vaqti)
+        await message.answer('Rasrochka oylarini kiriting:', reply_markup=months())
+    else:
+        await message.answer("Boshlang'ich to'lovni faqat raqamlar bilan $ hisobida kiriting!")
         await state.set_state(Add_order.avans)
         return
-
-
-    data = await state.get_data()
-    data['avans'] = message.text if message.text != "O'tkazib yuborish ➡️" else '0'
-    await state.set_data(data)
-
-    await state.set_state(Add_order.rasrochka_vaqti)
-    await message.answer('Rasrochka oylarini kiriting:', reply_markup=months())
-
 
 @dp.message(Add_order.rasrochka_vaqti)
 async def rasrochka_handler(msg: Message, state: FSMContext) -> None:
@@ -222,7 +220,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             else:
                 payment_schedule.append(f"{payment_date.strftime('%d %B %Y')}: {rounded_monthly_payment:.2f}$")
 
-        foiz_miqdori= price*(ustama/100)
+        foiz_miqdori= (price-avans)*(ustama/100)
         datas = [
             f"<b>Mijoz ismi:</b> {mijoz}",
             f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
@@ -232,9 +230,9 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
             f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
-            f"<b>To'liq summa :</b>  {price + avans + foiz_miqdori:.2f} $\n"
+            f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
             f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-            f"<b>Jami ustama bilan hisoblangan narx:</b> {overall_payment:.2f}$\n\n",
+            f"<b>Jami ustama bilan hisoblangan narx:</b> {price + foiz_miqdori:.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
 
@@ -252,7 +250,7 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     await call.message.edit_reply_markup(reply_markup=None)
     data = await state.get_data()
 
-    rasrochka_muddati_txt = data['rasrochka_muddati'].split(' ')[0]
+    rasrochka_muddati_txt = data.get('rasrochka_muddati').split(' ')[0]
     ic(rasrochka_muddati_txt)
 
     user = User.objects.filter(phone=data.get("phone")).first()
@@ -407,7 +405,7 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         await msg.answer(f"Xatolik yuz berdi: {str(e)}. Iltimos, qaytadan urinib ko'ring.")
         return
 
-    foiz_miqdori= price*(ustama/100)
+    foiz_miqdori= (price-avans)*(ustama/100)
     details = [
         f"<b>Mijoz ismi:</b> {data.get('full_name')}",
         f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
@@ -417,7 +415,7 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
         f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
-        f"<b>To'liq summa :</b>  {price + avans + foiz_miqdori:.2f} $\n"
+        f"<b>To'liq summa :</b>  {price - avans + foiz_miqdori:.2f} $\n"
         f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
         f"<b>Jami ustama bilan hisoblangan narx:</b> {total_with_interest:.2f} $",
         f"\n\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),

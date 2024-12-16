@@ -31,12 +31,12 @@ async def payments_summary(message: Message):
 
 
 
-    # Get unpaid payments due within the next 10 days
+
     @sync_to_async
     def get_upcoming_payments(end_date):
         return Installment.objects.filter(
-            next_payment_dates__gte=date.today(),  # Payments due today or later
-            next_payment_dates__lte=end_date,  # Payments due on or before the 10th day
+            next_payment_dates__gte=date.today(),
+            next_payment_dates__lte=end_date,
             status="ACTIVE"
         )
 

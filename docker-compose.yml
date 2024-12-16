@@ -41,7 +41,7 @@ services:
     environment:
       POSTGRES_PASSWORD: 1
     ports:
-      - "5433:5433"
+      - "5434:5434"
     volumes:
       - pg_data:/var/lib/postgresql/data/
 
