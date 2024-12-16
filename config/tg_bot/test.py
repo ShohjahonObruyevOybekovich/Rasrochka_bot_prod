@@ -41,20 +41,22 @@ def process_monthly_payment(user, order_id, amount):
         print(f"An error occurred: {str(e)}")
 
 def format_phone_number(phone_number: str) -> str:
-    # Remove any non-numeric characters, just in case
-    phone_number = ''.join(filter(str.isdigit, phone_number))
 
-    # Check if the number starts with +998 or 998, otherwise prepend +998
+    phone_number = ''.join(c for c in phone_number if c.isdigit())
+
+    # Prepend +998 if missing
     if phone_number.startswith('998'):
         phone_number = '+' + phone_number
     elif not phone_number.startswith('+998'):
         phone_number = '+998' + phone_number
 
-    # Ensure that the number has exactly 13 digits
+    # Check final phone number length
     if len(phone_number) == 13:
         return phone_number
     else:
         raise ValueError("Invalid phone number length")
+
+
 import re
 
 def extract_payment_amount(text):

@@ -43,14 +43,13 @@ async def phone_handler(msg: Message, state: FSMContext) -> None:
         await state.set_state(Add_order.phone)
         return
 
-    # Check if the phone number has a valid length (13 digits or a valid international format
 
-    # Format the phone number if it's valid
     phone = format_phone_number(msg.text)
-
-    # Get the current state data and update the phone field
+    ic(phone)
     data = await state.get_data()
+
     data["phone"] = phone
+    ic(data["phone"])
 
     # Update the state with the corrected phone number
     await state.set_data(data)
@@ -74,10 +73,9 @@ async def user_name_handler(message: Message, state: FSMContext) -> None:
         return
 
     data = await state.get_data()
+    ic(data["phone"])
     data['user_name'] = message.text
     await state.set_data(data)
-    User.objects.create(full_name=data['user_name'],
-                            phone=data['phone'])
     await state.set_state(Add_order.product_name)
     await message.answer("Mahsulotlar ro'yxatini kiriting:", reply_markup=back())
 
@@ -105,7 +103,7 @@ async def product_price_handler(message: Message, state: FSMContext) -> None:
         await state.set_state(Add_order.product_name)
         await message.answer("Mahsulotlar ro'yxatini qaytadan kiriting:", reply_markup=back())
         return
-    if message.text.isalpha() or message.text.endswith("$") or message.text.startswith("$"):
+    if not message.text.isdigit():
         await message.answer("Buyurtmaning tan narxini $ hisobida faqat sonlar bilan kiriting !")
         await state.set_state(Add_order.product_price)
         return
@@ -125,8 +123,14 @@ async def avans_handler(message: Message, state: FSMContext) -> None:
         await message.answer("Buyurtma narxini qaytadan kiriting:", reply_markup=back())
         return
 
+    if message.text.isdigit() :
+        data = await state.get_data()
+        data['avans'] = message.text
+        await state.set_data(data)
+        await state.set_state(Add_order.rasrochka_vaqti)
+        await message.answer('Rasrochka oylarini kiriting:', reply_markup=months())
 
-    if message.text.isnumeric() and (message.text not in ["O'tkazib yuborish ➡️", ortga]):
+    elif message.text == "O'tkazib yuborish ➡️":
         data = await state.get_data()
         data['avans'] = message.text if message.text != "O'tkazib yuborish ➡️" else '0'
         await state.set_data(data)
@@ -171,12 +175,14 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
     data['ustama'] = ustama
     await state.set_data(data)
 
-    if not ustama.is_integer():
+    if not ustama % 1 == 0:
         await message.answer("Bo'lib to'lash ustama foizini to'g'ri faqat raqam orqali kiriting:")
         await state.set_state(Add_order.ustama)
         return
 
+    ic(data.values())
     mijoz = ""
+
     if data.get("user_name") is None:
         user = User.objects.filter(phone=data.get("phone")).first()
         if user:
@@ -185,6 +191,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
         mijoz += data.get("user_name")
 
     try:
+
         price = Decimal(data.get("product_price", 0))
         avans = Decimal(data.get("avans", 0))
         ustama = Decimal(data.get("ustama", 0))
@@ -199,6 +206,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
 
         # Calculate overall payment with the fee
         overall_payment = (price - avans) + ((price - avans) * ustama) / 100
+        ic(overall_payment)
 
         # Calculate monthly payments
         base_monthly_payment = overall_payment / rasrochka_months
@@ -221,6 +229,9 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
                 payment_schedule.append(f"{payment_date.strftime('%d %B %Y')}: {rounded_monthly_payment:.2f}$")
 
         foiz_miqdori= (price-avans)*(ustama/100)
+
+        ic(mijoz,overall_payment, last_month_payment, payment_schedule,base_monthly_payment, foiz_miqdori,rounded_monthly_payment)
+
         datas = [
             f"<b>Mijoz ismi:</b> {mijoz}",
             f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
@@ -232,9 +243,11 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
             f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
             f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-            f"<b>Jami ustama bilan hisoblangan narx:</b> {price + foiz_miqdori:.2f}$\n\n",
+            f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
+
+        ic(datas)
 
         # Send the confirmation message with payment schedule
         await message.answer("\n".join(datas), reply_markup=accept())
@@ -252,8 +265,9 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
 
     rasrochka_muddati_txt = data.get('rasrochka_muddati').split(' ')[0]
     ic(rasrochka_muddati_txt)
-
-    user = User.objects.filter(phone=data.get("phone")).first()
+    user = User.objects.create(full_name=data.get('user_name'),
+                               phone=data.get('phone'))
+    user1 = User.objects.filter(phone=data.get("phone")).first()
     ic(user)
 
     today = datetime.today()
@@ -275,7 +289,7 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     ic(pay[0])
 
     Installment.objects.create(
-        user=user ,
+        user=user1 ,
         product=data['product_name'],
         price=data['product_price'],
         starter_payment=data['avans'],
@@ -348,7 +362,13 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         )
         return
     edited_date = extract_payment_amount(edited_date)
-
+    mijoz = ''
+    if data.get("user_name") is None:
+        user = User.objects.filter(phone=data.get("phone")).first()
+        if user:
+            mijoz += user.full_name
+    else:
+        mijoz += data.get("user_name")
     edited_date = int(edited_date)  # Convert to integer
     data["edited_date"] = edited_date
     day = edited_date
@@ -407,7 +427,7 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
 
     foiz_miqdori= (price-avans)*(ustama/100)
     details = [
-        f"<b>Mijoz ismi:</b> {data.get('full_name')}",
+        f"<b>Mijoz ismi:</b> {mijoz}",
         f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
         f"<b>Mahsulotlar:</b> {data.get('product_name', 'N/A')}",
         f"<b>Mahsulot tan narxi:</b> {data.get('product_price', 'N/A')} $",
@@ -415,9 +435,9 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
         f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
-        f"<b>To'liq summa :</b>  {price - avans + foiz_miqdori:.2f} $\n"
+        f"<b>To'liq summa :</b>  {price:.2f} $\n"
         f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-        f"<b>Jami ustama bilan hisoblangan narx:</b> {total_with_interest:.2f} $",
+        f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f} $",
         f"\n\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),
     ]
 

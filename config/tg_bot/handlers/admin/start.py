@@ -19,7 +19,7 @@ user_sessions = {}
 @dp.message(lambda msg:msg.text == "/start")
 async def command_start_handler(message: Message,state: FSMContext) -> None:
 
-    user = User.objects.filter(chat_id=message.chat.id)
+    user = User.objects.filter(chat_id=message.from_user.id)
     if not user:
         await state.set_state(Messeage.phone)
         await message.answer(
@@ -87,11 +87,8 @@ async def handle_phone_number(message: Message, state: FSMContext) -> None:
         return
 
     # Save the phone number to the user object
-    user, created = User.objects.get_or_create(chat_id=message.chat.id)
-    user.phone = phone_number
-    user.save()
+    user = User.objects.create(chat_id=message.from_user.id, phone=phone_number)
 
-    # Clear the state
     await state.clear()
 
 
@@ -168,7 +165,7 @@ async def paginate_orders(msg: Message, state: FSMContext) -> None:
             f"<b>Mahsulot:</b> {order.product}",
             f"<b>Narxi:</b> {price:.2f}$",
             f"<b>Boshlang'ich to'lov:</b> {starter_payment:.2f}$",
-            f"<b>Jami ustama bilan hisoblangan narx:</b> {overall_payment:.2f}$",
+            f"<b>To'lanishi lozim bo'lgan to'lov miqdori:</b> {overall_payment:.2f}$",
             f"<b>Qolgan to'lov:</b> {overall_payment - total_paid:.2f}$",
             "\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),
             "\n"

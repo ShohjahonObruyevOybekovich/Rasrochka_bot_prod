@@ -43,11 +43,9 @@ async def search_customers(inline_query: InlineQuery):
     query = inline_query.query.strip()
     results = []
 
-    # Search for users based on query
-    installments = await sync_to_async(Installment.objects.filter)(
-        (Q(user__full_name__incontains=query) | Q(user__phone__icontains=query)) & Q(status="ACTIVE")
-    )
+
     user = User.objects.filter(phone=query,installments__status="ACTIVE").all()
+    ic(user)
 
     for users in user:
         ic(users)
@@ -80,7 +78,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
     if "ID:" in parts:
         phone_index = parts.index("ID:")  # Find the index of "Phone:"
         user_id:int = parts[phone_index + 1]
-        ic(user_id,phone_index)
+
 
     try:
         orders = Installment.objects.filter(user_id=user_id,status="ACTIVE")
@@ -160,9 +158,9 @@ async def handle_customer_selection(message: Message, state: FSMContext):
                 f"<b>Rasrochka muddati:</b>  {installment_period} oylik\n"
                 f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
                 f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
-                f"<b>To'liq summa :</b>  {product_price-starter_payment+foiz_miqdori:.2f} $\n"
+                f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
                 f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-                f"<b>Jami ustama bilan hisoblangan narx:</b>  {overall_price:.2f}$\n"
+                f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + starter_payment + foiz_miqdori):.2f}$\n"
                 f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
                 f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
         )

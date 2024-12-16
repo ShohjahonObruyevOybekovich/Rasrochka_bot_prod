@@ -7,7 +7,7 @@ from django.db import models
 
 class User(models.Model):
     chat_id = models.BigIntegerField(null=True, blank=True, default=0)
-    full_name = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=255,null=True, blank=True)
     phone = models.CharField(max_length=255,null=True, blank=True)
     role = models.CharField(max_length=255,null=True,blank=True,
                             choices=[('ADMIN', 'admin'), ('USER', 'user')], default='USER')
