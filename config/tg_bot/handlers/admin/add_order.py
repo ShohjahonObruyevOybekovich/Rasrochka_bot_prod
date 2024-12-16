@@ -245,7 +245,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
             f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
             f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-            f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f}$\n\n",
+            # f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
 
@@ -439,7 +439,7 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
         f"<b>To'liq summa :</b>  {price:.2f} $\n"
         f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-        f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f} $",
+        # f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f} $",
         f"\n\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),
     ]
 
