@@ -73,11 +73,12 @@ import re
 @dp.message(StateFilter(Messeage.phone))
 async def handle_phone_number(message: Message, state: FSMContext) -> None:
     # Check if the message contains a contact
+
     if message.contact:
-        phone_number = message.contact.phone_number
+        phone_number = format_phone_number(message.contact.phone_number)
         ic(message.text)
     elif message.text and message.text.isnumeric() and len(message.text) ==13:  # If the phone number is entered as plain text
-        phone_number = message.text
+        phone_number = format_phone_number(message.text)
     else:
         await message.answer("Telefon raqamingizni Raqamni yuborish 📞 tugmasi orqali yuboring \n"
                              "yoki +998900000000 formatida kiriting: !", reply_markup=phone_number_btn())

@@ -183,14 +183,12 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
     ic(data.values())
     mijoz = ""
 
-    # if data.get("user_name") is None:
-    #     user = User.objects.filter(phone=data.get("phone")).first()
-    #     if user:
-    #         mijoz += user.full_name
-    #     else:
-    #         user = User.objects.create(phone=data.get("phone"))
-    # else:
-    #     mijoz += data.get("user_name")
+    if data.get("user_name") is None:
+        user = User.objects.filter(phone=data.get("phone")).first()
+        if user:
+            mijoz = user.full_name
+    else:
+        mijoz = data.get("user_name")
 
     try:
 
@@ -244,7 +242,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
             f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
-            f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
+            f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n\n",
             # f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
@@ -267,10 +265,10 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
 
     rasrochka_muddati_txt = data.get('rasrochka_muddati').split(' ')[0]
     ic(rasrochka_muddati_txt)
-    user = User.objects.create(full_name=data.get('user_name'),
-                               phone=data.get('phone'))
     user1 = User.objects.filter(phone=data.get("phone")).first()
-    ic(user)
+    if user1 is None:
+        user1 = User.objects.create(full_name=data.get('user_name'),
+                               phone=data.get('phone'))
 
     today = datetime.today()
     payment_schedule = []
@@ -314,7 +312,7 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     rounded_monthly_payment = base_monthly_payment.quantize(Decimal('1'), rounding=ROUND_CEILING)
     last_month_payment = overall_payment - rounded_monthly_payment * (rasrochka_months - 1)
 
-    ic(user, user.chat_id)
+    # ic(user, user.chat_id)
     try:
         sms_service = SayqalSms()
         sms_service.send_sms(
@@ -323,7 +321,7 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
             number=data['phone'],
         )
         message = await call.bot.send_message(
-            chat_id=user.chat_id,
+            chat_id=user1.chat_id,
             text=f"Xurmatli mijoz sizning nomingizga muddatli to'lov evaziga  {data['product_name']}\n do'konimiz tomonidan rasmiylashtirildi!\n"
             f"<b>Maxsulot nomi:</b> {data['product_name']}\n"
             f"<b>Har oylik to'lov miqdori:</b> {rounded_monthly_payment}$\n"
@@ -365,12 +363,12 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         return
     edited_date = extract_payment_amount(edited_date)
     mijoz = ''
-    # if data.get("user_name") is None:
-    #     user = User.objects.filter(phone=data.get("phone")).first()
-    #     if user:
-    #         mijoz += user.full_name
-    # else:
-    #     mijoz += data.get("user_name")
+    if data.get("user_name") is None:
+        user = User.objects.filter(phone=data.get("phone")).first()
+        if user:
+            mijoz = user.full_name
+    else:
+        mijoz = data.get("user_name")
     edited_date = int(edited_date)  # Convert to integer
     data["edited_date"] = edited_date
     day = edited_date
