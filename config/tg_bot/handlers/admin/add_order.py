@@ -183,12 +183,14 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
     ic(data.values())
     mijoz = ""
 
-    if data.get("user_name") is None:
-        user = User.objects.filter(phone=data.get("phone")).first()
-        if user:
-            mijoz += user.full_name
-    else:
-        mijoz += data.get("user_name")
+    # if data.get("user_name") is None:
+    #     user = User.objects.filter(phone=data.get("phone")).first()
+    #     if user:
+    #         mijoz += user.full_name
+    #     else:
+    #         user = User.objects.create(phone=data.get("phone"))
+    # else:
+    #     mijoz += data.get("user_name")
 
     try:
 
@@ -363,12 +365,12 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         return
     edited_date = extract_payment_amount(edited_date)
     mijoz = ''
-    if data.get("user_name") is None:
-        user = User.objects.filter(phone=data.get("phone")).first()
-        if user:
-            mijoz += user.full_name
-    else:
-        mijoz += data.get("user_name")
+    # if data.get("user_name") is None:
+    #     user = User.objects.filter(phone=data.get("phone")).first()
+    #     if user:
+    #         mijoz += user.full_name
+    # else:
+    #     mijoz += data.get("user_name")
     edited_date = int(edited_date)  # Convert to integer
     data["edited_date"] = edited_date
     day = edited_date
