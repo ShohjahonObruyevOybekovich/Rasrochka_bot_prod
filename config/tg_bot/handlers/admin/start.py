@@ -88,7 +88,7 @@ async def handle_phone_number(message: Message, state: FSMContext) -> None:
         return
 
     # Save the phone number to the user object
-    user = User.objects.create(chat_id=message.from_user.id, phone=phone_number)
+    user = User.objects.create(chat_id=message.from_user.id, phone=phone_number,full_name=message.from_user.full_name)
 
     await state.clear()
 

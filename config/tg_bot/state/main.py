@@ -24,6 +24,7 @@ class PaymentFlow(StatesGroup):
     order_selection = State()
     add_payment = State()
     enter_amount = State()
+    edit_fee = State()
 
 class NextPayment(StatesGroup):
     next_10_days = State()

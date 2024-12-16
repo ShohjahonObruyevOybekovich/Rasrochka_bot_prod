@@ -1,53 +1,73 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
+
+from aiogram.client import bot
+from asgiref.sync import async_to_sync
 from celery import shared_task
 from django.utils.timezone import now
-from bot.models import Payment, User, Installment
-from asgiref.sync import sync_to_async
-
-
-
 from aiogram import Bot
+from bot.models import Installment
+#
+# # Replace with your bot's token
+# BOT_TOKEN = "your_bot_token"
+# bot = Bot(token=BOT_TOKEN)
 
 async def send_notification(bot: Bot, user_id: int, message: str):
-    await bot.send_message(user_id, message)
+    """
+    Sends a notification to a user using Telegram bot.
+    """
+    try:
+        await bot.send_message(chat_id=user_id, text=message)
+    except Exception as e:
+        print(f"Failed to send message to {user_id}: {e}")
 
 
 @shared_task
 def send_payment_reminders():
+    """
+    Celery task to send reminders to users about upcoming payments.
+    """
     today = now().date()
-    reminders = [10, 3, 1]  # Days before payment due date
+    reminders = [5, 1]  # Days before the payment due date
     users_to_notify = []
 
-    @sync_to_async
-    def get_upcoming_payments(end_date):
-        return Installment.objects.filter(
-            next_payment_dates__gte=date.today(),  # Payments due today or later
-            next_payment_dates__lte=end_date,  # Payments due on or before the 10th day
-            status="ACTIVE"
-        )
-
+    # Query installments with upcoming payments
     for reminder in reminders:
-        # Calculate the reminder date
         reminder_date = today + timedelta(days=reminder)
 
-        # Find payments due on the reminder date
-        due_payments = get_upcoming_payments(reminder)
+        due_installments = Installment.objects.filter(
+            next_payment_dates=reminder_date,
+            status="ACTIVE",
+        )
 
-        for payment in due_payments:
+        for installment in due_installments:
+            # Prepare data for notification
             users_to_notify.append({
-                "Mijoz ismi": payment.user.full_name,
-                "Telefon raqami": payment.user.phone,
-                "To'lov sanasi": payment.next_payment_dates,
-                "Miqdor": payment.amount,
-                "To'lovgacha qolgan kun": reminder,
+                "user_id": installment.user.chat_id,  # Replace with correct field for Telegram ID
+                "full_name": installment.user.full_name,
+                "phone": installment.user.phone,
+                "due_date": installment.next_payment_dates,
+                "amount": installment.price,
+                "days_left": reminder,
             })
 
-    # Send notifications to users
+    # Send notifications
     for user_data in users_to_notify:
-        send_notification_to_user(user_data)
+        message = (
+            f"Assalomu alaykum! Sizning keyingi {user_data['amount']} $ to'lovingiz "
+            f"{user_data['due_date']} kuni bo'lishi kerak. "
+            f"{user_data['days_left']} kun qoldi!"
+        )
+
+        # Use async_to_sync to call async function in Celery
+        async_to_sync(send_notification)(bot, user_data["user_id"], message)
 
 
-def send_notification_to_user(user_data):
-    message = (f"Assalomu alaykum! Sizning keyingi {user_data['Miqdor']} $ to'lovingiz {user_data["To'lov sanasi"]} kunida bo'lishi kerak."
-               f" {user_data["To'lovgacha qolgan kun"]} kun qoldi!")
-    send_notification(user_id=user_data['user_id'], message=message)  # Replace this with your notification logic
+# Schedule this task daily at 8 AM
+@shared_task
+def schedule_reminders_daily():
+    """
+    Schedules reminders daily at 8 AM.
+    """
+    send_payment_reminders.apply_async(
+        eta=datetime.combine(now().date() + timedelta(days=1), datetime.min.time()).replace(minute=50,hour=1)
+    )

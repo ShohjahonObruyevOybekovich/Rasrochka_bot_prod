@@ -21,8 +21,14 @@ def excel():
     ])
     return keyboard
 
+# def reply_payment(order):
+#     callback_data = f"payment_adding:{order.id}"
+#     keyboard = InlineKeyboardMarkup(inline_keyboard=[
+#         [InlineKeyboardButton(text="To'lov qo'shish",callback_data=callback_data)]])
+#     return keyboard
+
 def reply_payment(order):
-    callback_data = f"payment_adding:{order.id}"
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="To'lov qo'shish",callback_data=callback_data)]])
-    return keyboard
+    keyboard = InlineKeyboardButton(text="To'lov qo'shish",callback_data=f"payment_adding:{order.id}")
+    keyboard2 = InlineKeyboardButton(text="Foizini o'zgartirish",callback_data=f"edit_fee:{order.id}")
+    keyboard3 = InlineKeyboardButton(text="Buyurtmani bekor qilish",callback_data=f"cancelled:{order.id}")
+    return InlineKeyboardMarkup(inline_keyboard=[[keyboard],[keyboard2],[keyboard3]])

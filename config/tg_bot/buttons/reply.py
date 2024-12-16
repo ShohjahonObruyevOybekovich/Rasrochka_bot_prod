@@ -28,10 +28,12 @@ def admin_btn():
     keyboard2 = KeyboardButton(text = orders_txt)
     keyboard3 = KeyboardButton(text=add_order)
     keyboard4 = KeyboardButton(text=next_payments)
+    keyboard6 = KeyboardButton(text=statistic_txt)
     keyboard5 = KeyboardButton(text=back_to_user)
+
     design = [[keyboard1, keyboard2],
               [keyboard3, keyboard4],
-              [keyboard5]]
+              [keyboard6,keyboard5]]
     return ReplyKeyboardMarkup(keyboard=design ,
                                resize_keyboard=True)
 

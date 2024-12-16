@@ -9,7 +9,7 @@ from dispatcher import dp
 from tg_bot.buttons.text import next_payments
 from bot.models import Installment, Payment
 from tg_bot.state.sent_notification import *
-
+from bot.tasks import send_payment_reminders
 @dp.message(lambda msg: msg.text == next_payments)
 async def payments_summary(message: Message):
     """
@@ -56,12 +56,12 @@ async def payments_summary(message: Message):
                             f"{payment_date.strftime('%d %B %Y')}da amalga oshirilishi kerak. "
                             f"Iltimos, to'lovni o'z vaqtida bajaring!")
     datetime = datetime.now() + timedelta(seconds=5)
-    res = send_next_payment_notifications.apply_async(
-        args=[datetime.strftime('%Y-%m-%d %H:%M:%S')],
-        kwargs={},
-        eta=datetime
-    )
-    ic(res)
+    # res = send_payment_reminders.apply_async(
+    #     args=[datetime.strftime('%Y-%m-%d %H:%M:%S')],
+    #     kwargs={},
+    #     eta=datetime
+    # )
+    # ic(res)
 
     from html import escape
 

@@ -9,7 +9,7 @@ from tg_bot.handlers.admin.next_payments import *
 from tg_bot.handlers.admin.start import *
 from tg_bot.handlers.admin.orders import *
 from tg_bot.handlers.admin.order_history import *
-
+from tg_bot.handlers.admin.statistics import *
 
 @dp.message(lambda msg : msg.text == admin_txt )
 async def check_admin(message: Message) -> None:

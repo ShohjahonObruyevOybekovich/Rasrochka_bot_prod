@@ -243,7 +243,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
             f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
             f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n\n",
-            # f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f}$\n\n",
+            f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + foiz_miqdori):.2f}$\n\n",
             "\n".join(payment_schedule),
         ]
 
@@ -316,8 +316,11 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     try:
         sms_service = SayqalSms()
         sms_service.send_sms(
-            message=f"Buyurtma rasmiylashtirildi"
-                    f"Oylik to'lovingiz: {rounded_monthly_payment}$",
+            message=f"Buyurtma rasmiylashtirildi\n"
+                    f"Buyurtma nomi:{data.get('product_name')}\n"
+                    f"Oylik to'lovingiz: {rounded_monthly_payment}$\n"
+                    f"To'liq malumot olish uchun botimizdan ro'yxatdan o'ting:"
+                    f"https://t.me/ecommerce_1_bot",
             number=data['phone'],
         )
         message = await call.bot.send_message(
@@ -437,7 +440,7 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
         f"<b>To'liq summa :</b>  {price:.2f} $\n"
         f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-        # f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + avans + foiz_miqdori):.2f} $",
+        f"<b>Jami ustama bilan hisoblangan narx:</b> {(price + foiz_miqdori):.2f} $",
         f"\n\n<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule),
     ]
 

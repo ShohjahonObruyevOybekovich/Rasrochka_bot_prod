@@ -12,5 +12,6 @@ orders_txt = "Buyurtmalar"
 add_order = "Buyurtma qo'shish"
 back_to_user = "Foydalanuvchi bo'limiga qaytish"
 next_payments = "Keyingi to'lovlar"
+statistic_txt = "📈 Statistikalar"
 
 admin_txt = "Admin_parol"
