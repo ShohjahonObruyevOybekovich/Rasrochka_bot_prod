@@ -91,6 +91,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         await message.answer(str(e), reply_markup=admin_btn())
         await state.clear()
         return
+
     page_size = 10
     page = 1
     start = (page - 1) * page_size
@@ -166,11 +167,13 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         )
         order_details_list.append(order_details)
 
-    for order_details in order_details_list:
-        await message.answer(order_details, parse_mode="HTML", reply_markup=reply_payment(order))
-    await message.answer("Buyurtmalar ...", reply_markup=back())
-    await state.update_data(user_id=user_id)
-
+    for order_details, order in zip(order_details_list, orders_page):
+        await message.answer(
+            order_details,
+            parse_mode="HTML",
+            reply_markup=reply_payment(order)  # Ensure reply_payment generates buttons with unique order IDs
+        )
+    await message.answer("Buyurtmalar...", reply_markup=back())
 
 
 @dp.callback_query(lambda call: call.data.startswith("payment_adding:"))
@@ -201,7 +204,7 @@ async def handle_payment_amount(message: Message, state: FSMContext):
     if message.text == ortga:
         # await state.set_state(PaymentFlow.enter_amount)
         await message.answer("Admin_menu:", reply_markup=admin_btn())
-        state.clear()
+        await state.clear()
         return
 
     amount = message.text.strip()
@@ -257,20 +260,29 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                 text=f"To'lov qo'shildi: {amount} dollar."
                      f"\nQolgan to'lov miqdori: "
                      f"{remaining_balance} dollar."
+
+            )
+
+            sms_service = SayqalSms()
+            sms_service.send_sms(
+                message=f"To'lov qo'shildi: {amount} dollar.\n"
+                        f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
+                number=installment.user.phone
             )
         else:
             await message.answer(
                 f"To'lov qo'shildi: {amount} dollar.\nQolgan to'lov miqdori: {remaining_balance} dollar.",
                 reply_markup=admin_btn()
             )
+            sms_service = SayqalSms()
+            sms_service.send_sms(
+                message=f"To'lov qo'shildi: {amount} dollar.\n"
+                        f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
+                number=installment.user.phone
+            )
             await message.answer("BU mijoz hali botdan foydalangani yo'q", reply_markup=admin_btn())
 
-        sms_service = SayqalSms()
-        sms_service.send_sms(
-            message=f"To'lov qo'shildi: {amount} dollar.\n"
-                    f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
-            number="+998908175047"
-        )
+
 
 
         await state.clear()
