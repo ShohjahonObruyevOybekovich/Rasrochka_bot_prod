@@ -1,5 +1,6 @@
 from django.contrib import admin
-from bot.models import User, Installment, Payment
+from bot.models import User, Installment, Payment, Sms
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -18,3 +19,8 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = ['user', 'installment', 'payment_date', 'amount', 'created_at']
     search_fields = ['user__full_name', 'installment__product']
     list_filter = ['payment_date', 'installment__status']
+
+@admin.register(Sms)
+class SmsAdmin(admin.ModelAdmin):
+    list_display = ["count","updated_at"]
+

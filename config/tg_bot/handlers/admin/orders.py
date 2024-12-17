@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 from icecream import ic
 
-from bot.models import User, Installment, Payment
+from bot.models import User, Installment, Payment, Sms
 from dispatcher import dp
 from sms import SayqalSms
 from tg_bot.buttons.inline import  reply_payment
@@ -225,6 +225,13 @@ async def handle_payment_amount(message: Message, state: FSMContext):
         remaining_balance = installment.calculate_overall_price() - total_paid
         remaining_balance = round(remaining_balance,1)
 
+
+        if remaining_balance < 0:
+            await message.answer("To'lov miqdori ortiqcha kiritldi, tekshirib qayta kiriting !")
+            await state.clear()
+            await state.set_state(PaymentFlow.enter_amount)
+            return
+
         if remaining_balance <= 0:
             installment.update_status()
             await message.answer(f"Mijoz qarizdorligi yakunlandi")
@@ -241,6 +248,8 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                 message="Qarizdorlik yakunlandi",
                 number=installment.user.phone
             )
+            sms = Sms()
+            sms.counter()
 
 
         process_monthly_payment(
@@ -269,6 +278,10 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                         f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
                 number=installment.user.phone
             )
+
+            sms = Sms()
+            sms.counter()
+
         else:
             await message.answer(
                 f"To'lov qo'shildi: {amount} dollar.\nQolgan to'lov miqdori: {remaining_balance} dollar.",
@@ -280,6 +293,8 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                         f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
                 number=installment.user.phone
             )
+            sms = Sms()
+            sms.counter()
             await message.answer("BU mijoz hali botdan foydalangani yo'q", reply_markup=admin_btn())
 
 
@@ -470,6 +485,14 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
         # Mark the order as completed or canceled
         installment.status = "COMPLETED"
         installment.save()
+        sms_service = SayqalSms()
+        sms_service.send_sms(
+            message=f"Buyurtma yakunlandi!",
+            number=installment.user.phone
+        )
+
+        sms = Sms()
+        sms.counter()
 
         await callback_query.message.answer("Buyurtma muvaffaqiyatli bekor qilindi va yakunlandi.", reply_markup=admin_btn())
         await state.clear()

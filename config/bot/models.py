@@ -111,3 +111,13 @@ class Payment(models.Model):
         return self.installment and self.installment.status == "COMPLETED"
 
 
+class Sms(models.Model):
+    count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f"SMS count is  {self.count}"
+
+    def counter(self):
+        self.count += 1  # Increment the count field by 1
+        self.save()

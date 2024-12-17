@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from icecream import ic
 from pydantic.types import AnyType
 
-from bot.models import User, Installment
+from bot.models import User, Installment, Sms
 from dispatcher import dp
 from sms import SayqalSms
 from tg_bot.buttons.inline import  accept
@@ -323,6 +323,9 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
                     f"https://t.me/ecommerce_1_bot",
             number=data['phone'],
         )
+        sms = Sms()
+        sms.counter()
+
         message = await call.bot.send_message(
             chat_id=user1.chat_id,
             text=f"Xurmatli mijoz sizning nomingizga muddatli to'lov evaziga  {data['product_name']}\n do'konimiz tomonidan rasmiylashtirildi!\n"

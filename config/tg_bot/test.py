@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from icecream import ic
 
-from bot.models import Payment, Installment
+from bot.models import Payment, Installment, Sms
 
 
 def process_monthly_payment(user, order_id, amount):
@@ -75,3 +75,5 @@ def extract_payment_amount(text):
     if match:
         return float(match.group())  # Convert the matched string to a float
     return None  # Return None if no numbers are found
+
+
