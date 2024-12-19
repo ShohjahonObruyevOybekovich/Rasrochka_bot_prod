@@ -58,3 +58,6 @@ def months():
     design = [[uch_oy, olti_oy],[toqqiz_oy,yigirma_turt],[back]]
     return ReplyKeyboardMarkup(keyboard=design , resize_keyboard=True)
 
+def start_btn():
+    start = KeyboardButton(text = "start")
+    return ReplyKeyboardMarkup(keyboard=[[start]] , resize_keyboard=True)

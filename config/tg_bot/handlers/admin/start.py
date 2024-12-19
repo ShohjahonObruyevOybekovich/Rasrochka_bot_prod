@@ -93,7 +93,7 @@ async def paginate_orders(msg: Message, state: FSMContext) -> None:
         user = User.objects.filter(chat_id=msg.from_user.id).first()
         if not user:
             await msg.answer("Telefon raqamingiz aniqlanmadi. Iltimos, qaytadan ro'yxatdan o'ting.",
-                             reply_markup=menu_btn())
+                             reply_markup=start_btn())
             return
 
         # Fetch active orders for the user
@@ -121,8 +121,8 @@ async def paginate_orders(msg: Message, state: FSMContext) -> None:
 
             # Start building the payment schedule
             payment_schedule = []
-            today = datetime.today()
-            start_day = today.replace(day=15) + relativedelta(months=1)
+            today = order.next_payment_dates
+            start_day = today.replace(day=1) + relativedelta(months=1)
 
             applied_payments = Decimal(0)
             for month in range(installment_period):
