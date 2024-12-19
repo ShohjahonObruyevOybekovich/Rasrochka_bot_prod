@@ -21,7 +21,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         # Ask for the phone number if the user is not found
         await state.set_state(Messeage.phone)
         await message.answer(
-            text=f"Assalomu alaykum <b><i>{message.from_user.username}</i></b> "
+            text=f"Assalomu alaykum "
                  f"\nBotdan foydalanish uchun raqamingizni yuboring 👇🏿",
             parse_mode="HTML",
             reply_markup=phone_number_btn()
@@ -32,7 +32,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
             await message.answer("Admin menusi:", reply_markup=admin_btn())
         else:
             await message.answer(
-                text=f"Assalomu alaykum <b><i>{message.from_user.username}</i></b> "
+                text=f"Assalomu alaykum "
                      f"\nBuyruqlardan birini tanlang 👇🏿",
                 parse_mode="HTML",
                 reply_markup=menu_btn()
@@ -83,7 +83,7 @@ async def handle_phone_number(message: Message, state: FSMContext) -> None:
             )
     except Exception as e:
         print(f"Error: {e}")
-        await message.answer("Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
 
 
 @dp.message(lambda msg: msg.text == orders_list_txt)
