@@ -72,6 +72,20 @@ services:
       - redis
     volumes: *shared_volumes
 
+  celery_beat:
+    build:
+      context: ./config
+    container_name: celery_beat
+    restart: always
+    command: celery --app=config beat --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - pg
+      - celery  # Ensure celery worker starts before beat
+    volumes: *shared_volumes
+
 
 volumes:
   pg_data:

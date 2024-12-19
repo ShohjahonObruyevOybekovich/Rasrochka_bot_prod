@@ -88,7 +88,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
             return
         sorted_orders = sorted(orders, key=lambda x: x.product.lower())  # Sort by product name, case insensitive
     except Exception as e:
-        await message.answer(str(e), reply_markup=admin_btn())
+        # await message.answer("Qidiruv yakunlandi !", reply_markup=admin_btn())
         await state.clear()
         return
 
@@ -441,7 +441,8 @@ async def process_edit_fee(message: Message, state: FSMContext):
                     f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
                     f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
                     f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-                    f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + starter_payment + foiz_miqdori):.2f}$\n"
+                    f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + 
+                                     starter_payment + foiz_miqdori):.2f}$\n"
                     f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
                     f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
             )
@@ -485,6 +486,7 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
         # Mark the order as completed or canceled
         installment.status = "COMPLETED"
         installment.save()
+
         sms_service = SayqalSms()
         sms_service.send_sms(
             message=f"Buyurtma yakunlandi!",
@@ -494,7 +496,8 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
         sms = Sms()
         sms.counter()
 
-        await callback_query.message.answer("Buyurtma muvaffaqiyatli bekor qilindi va yakunlandi.", reply_markup=admin_btn())
+        await callback_query.message.answer("Buyurtma muvaffaqiyatli bekor qilindi va yakunlandi.",
+                                            reply_markup=admin_btn())
         await state.clear()
 
         # Notify the user if they have a chat_id
@@ -506,7 +509,7 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
             )
 
     except Exception as e:
-        await callback_query.message.answer(f"Xatolik yuz berdi: {str(e)}",reply_markup=admin_btn())
+        await callback_query.message.answer(f"Admin menu",reply_markup=admin_btn())
 
 
 @dp.callback_query(lambda call: call.data == "cancel_action")

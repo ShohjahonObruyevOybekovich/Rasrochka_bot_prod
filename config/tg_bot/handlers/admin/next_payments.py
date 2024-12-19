@@ -9,7 +9,7 @@ from dispatcher import dp
 from tg_bot.buttons.text import next_payments
 from bot.models import Installment, Payment
 from tg_bot.state.sent_notification import *
-from bot.tasks import send_payment_reminders
+# from bot.tasks import send_payment_reminders
 @dp.message(lambda msg: msg.text == next_payments)
 async def payments_summary(message: Message):
     """

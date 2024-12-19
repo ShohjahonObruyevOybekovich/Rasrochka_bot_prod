@@ -320,7 +320,7 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
                     f"Buyurtma nomi:{data.get('product_name')}\n"
                     f"Oylik to'lovingiz: {rounded_monthly_payment}$\n"
                     f"To'liq malumot olish uchun botimizdan ro'yxatdan o'ting:"
-                    f"https://t.me/ecommerce_1_bot",
+                    f"https://t.me/ab_nasiya_bot",
             number=data['phone'],
         )
         sms = Sms()
