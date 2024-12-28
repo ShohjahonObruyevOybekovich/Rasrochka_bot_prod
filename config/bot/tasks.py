@@ -11,8 +11,8 @@ from aiogram import Bot
 from config.celery import app
 from dispatcher import Dispatcher, TOKEN
 
-from bot.models import Installment
-
+from bot.models import Installment, Sms
+from sms import SayqalSms
 
 bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 # Logger setup
@@ -30,7 +30,7 @@ def get_upcoming_payments(start_date, end_date):
     )
 
 
-async def send_async_message(chat_id, text):
+async def send_async_message(chat_id, text, phone):
     """
     Sends a message to the specified chat_id asynchronously.
     """
@@ -38,6 +38,14 @@ async def send_async_message(chat_id, text):
         # Ensure you use an instance of Bot
         await bot.send_message(chat_id, text=text, parse_mode=ParseMode.HTML)
         logging.info(f"Message sent to chat_id {chat_id}.")
+        sms_service = SayqalSms()
+        sms_service.send_sms(
+            message=text,
+            number= phone
+        )
+        sms = Sms()
+        sms.counter()
+        logging.info(f"Message sent to phone {phone}.")
     except Exception as e:
         logging.error(f"Failed to send message to chat_id {chat_id}: {e}")
 
@@ -63,6 +71,6 @@ def send_daily_message():
             f"keyingi to'lov muddati {payment.next_payment_dates}. "
             f"To'lovni o'z vaqtida amalga oshiring."
         )
-        asyncio.run(send_async_message(user_chat_id, message_text))
+        asyncio.run(send_async_message(user_chat_id, message_text,payment.user.phone))
 
     logging.info("Celery task completed.")
