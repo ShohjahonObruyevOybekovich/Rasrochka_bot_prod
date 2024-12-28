@@ -1,5 +1,6 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+from bot.models import Category
 from tg_bot.buttons.text import *
 
 
@@ -43,6 +44,16 @@ def skip():
     keyboard2 = KeyboardButton(text = ortga)
     design = [[keyboard1],[keyboard2]]
     return ReplyKeyboardMarkup(keyboard=design , resize_keyboard=True)
+
+
+def category():
+    category = Category.objects.all()
+    category_keyboard = [[KeyboardButton(text=ct.name)] for ct in category]
+    back = [KeyboardButton(text=ortga)]
+    category_keyboard.append(back)
+    return ReplyKeyboardMarkup(keyboard=category_keyboard, resize_keyboard=True)
+
+
 
 def back():
     keyboard1 = KeyboardButton(text = ortga)

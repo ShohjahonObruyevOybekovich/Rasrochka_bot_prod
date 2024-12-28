@@ -1,5 +1,5 @@
 from django.contrib import admin
-from bot.models import User, Installment, Payment, Sms
+from bot.models import User, Installment, Payment, Sms, Category
 
 
 @admin.register(User)
@@ -23,4 +23,8 @@ class PaymentAdmin(admin.ModelAdmin):
 @admin.register(Sms)
 class SmsAdmin(admin.ModelAdmin):
     list_display = ["count","updated_at"]
+
+@admin.register(Category)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ["name"]
 

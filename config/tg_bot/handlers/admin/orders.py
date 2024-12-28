@@ -103,6 +103,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         # Extract order details
         customer_name = order.user.full_name
         phone_number = order.user.phone
+        category = order.category.name
         products = order.product
         product_price = Decimal(order.price)
         starter_payment = Decimal(order.starter_payment)
@@ -153,10 +154,11 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         order_details = (
                 f"<b>Mijoz ismi:</b>  {customer_name}\n"
                 f"<b>Telefon raqami:</b>  {phone_number}\n"
+                f"<b>Buyurtmalar guruhi:</b> {category}\n"
                 f"<b>Mahsulotlar:</b>  {products}\n"
                 f"<b>Mahsulot tan narxi:</b>  {product_price:.2f} $\n"
                 f"<b>Boshlang'ich to'lov:</b>  {starter_payment:.2f} $\n"
-                f"<b>Rasrochka muddati:</b>  {installment_period} oylik\n"
+                f"<b>Nasiya savdo muddati:</b>  {installment_period} oylik\n"
                 f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
                 f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
                 f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
@@ -384,6 +386,7 @@ async def process_edit_fee(message: Message, state: FSMContext):
             customer_name = order.user.full_name
             phone_number = order.user.phone
             products = order.product
+            category = order.category.name
             product_price = Decimal(order.price)
             starter_payment = Decimal(order.starter_payment)
             installment_period = order.payment_months
@@ -433,10 +436,11 @@ async def process_edit_fee(message: Message, state: FSMContext):
             order_details = (
                     f"<b>Mijoz ismi:</b>  {customer_name}\n"
                     f"<b>Telefon raqami:</b>  {phone_number}\n"
+                    f"<b>Mahsulotlar guruhi:</b> {category}\n"
                     f"<b>Mahsulotlar:</b>  {products}\n"
                     f"<b>Mahsulot tan narxi:</b>  {product_price:.2f} $\n"
                     f"<b>Boshlang'ich to'lov:</b>  {starter_payment:.2f} $\n"
-                    f"<b>Rasrochka muddati:</b>  {installment_period} oylik\n"
+                    f"<b>Nasiya savdo muddati:</b>  {installment_period} oylik\n"
                     f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
                     f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
                     f"<b>To'liq summa :</b>  {product_price:.2f} $\n"

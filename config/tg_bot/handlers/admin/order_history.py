@@ -11,7 +11,7 @@ from dispatcher import dp
 @dp.message(lambda msg: msg.text == order_history_txt)
 async def command_start_handler(message: Message) -> None:
     # Retrieve all installments
-    installments = await sync_to_async(Installment.objects.filter)(status="COMPLETED")
+    installments = Installment.objects.all()
 
     if not installments:
         await message.answer("To'lovlari yakunlangan buyurtmalar mavjud emas!.")
@@ -68,9 +68,11 @@ async def command_start_handler(message: Message) -> None:
             "ID": installment.id,
             "Mijoz": installment.user.full_name,
             "Telefon raqami": installment.user.phone,
+            "Mahsulotlar guruhi": installment.category.name,
             "Mahsulotlar": "\n".join(
                 [f"{product.strip()} " for product in set(installment.product.split(","))]
             ),
+            "Buyurtma statusi": installment.status,
             "Avans": f"{installment.starter_payment}$",
             "Ustama foizi" : f"{installment.additional_fee_percentage} %",
             "Ustama miqdori" : f"{installment.price* (installment.additional_fee_percentage/100):.2f} $",

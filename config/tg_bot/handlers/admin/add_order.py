@@ -6,14 +6,15 @@ from aiogram.types import Message, CallbackQuery
 from aiohttp.hdrs import CONTENT_TYPE
 from asgiref.sync import sync_to_async
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ObjectDoesNotExist
 from icecream import ic
 from pydantic.types import AnyType
 
-from bot.models import User, Installment, Sms
+from bot.models import User, Installment, Sms, Category
 from dispatcher import dp
 from sms import SayqalSms
 from tg_bot.buttons.inline import  accept
-from tg_bot.buttons.reply import menu_btn, skip, back, admin_btn,months
+from tg_bot.buttons.reply import menu_btn, skip, back, admin_btn, months, category
 from tg_bot.buttons.text import *
 from tg_bot.state.main import *
 from datetime import datetime
@@ -43,9 +44,14 @@ async def phone_handler(msg: Message, state: FSMContext) -> None:
         await state.set_state(Add_order.phone)
         return
 
+    try:
+        phone = format_phone_number(msg.text)
+    except Exception as e:
+        await msg.answer("Raqam uzunligi notugri kiritildi iltimos tekshirib qaytadan kiriting!")
+        await state.clear()
+        await state.set_state(Add_order.phone)
+        return
 
-    phone = format_phone_number(msg.text)
-    ic(phone)
     data = await state.get_data()
 
     data["phone"] = phone
@@ -57,11 +63,12 @@ async def phone_handler(msg: Message, state: FSMContext) -> None:
 
     user = await sync_to_async(User.objects.filter(phone=phone).first)()
     if user:
-        await state.set_state(Add_order.product_name)
-        await msg.answer("Mahsulotlar nomini kiriting:", reply_markup=back())
+        await state.set_state(Add_order.product_category)
+        await msg.answer("Mahsulotlar guruhini kiriting:", reply_markup=category())
     else:
         await state.set_state(Add_order.user_name)
         await msg.answer("Mijoz ismini kiriting:", reply_markup=back())
+
 
 
 
@@ -76,16 +83,35 @@ async def user_name_handler(message: Message, state: FSMContext) -> None:
     ic(data["phone"])
     data['user_name'] = message.text
     await state.set_data(data)
-    await state.set_state(Add_order.product_name)
-    await message.answer("Mahsulotlar ro'yxatini kiriting:", reply_markup=back())
+    await state.set_state(Add_order.product_category)
+    await message.answer("Mahsulotlar Guruhini tanlang:", reply_markup=category())
+
+
 
 
 # Handle product name input
+@dp.message(Add_order.product_category)
+async def product_name_handler(message: Message, state: FSMContext) -> None:
+    if message.text == ortga:
+        await state.set_state(Add_order.phone)
+        await message.answer("Mijoz raqamini qaytadan kiriting:", reply_markup=back())
+        await state.clear()
+        return
+
+    data = await state.get_data()
+    data['product_category'] = message.text
+    await state.set_data(data)
+
+    await state.set_state(Add_order.product_name)
+    await message.answer("Buyurtmalarning nomini kiriting:", reply_markup=back())
+
+
+
 @dp.message(Add_order.product_name)
 async def product_name_handler(message: Message, state: FSMContext) -> None:
     if message.text == ortga:
         await state.set_state(Add_order.user_name)
-        await message.answer("To'liq ismingizni qaytadan kiriting:", reply_markup=back())
+        await message.answer("Buyurtmalarning guruhini kiriting:", reply_markup=category())
         return
 
     data = await state.get_data()
@@ -128,7 +154,7 @@ async def avans_handler(message: Message, state: FSMContext) -> None:
         data['avans'] = message.text
         await state.set_data(data)
         await state.set_state(Add_order.rasrochka_vaqti)
-        await message.answer('Rasrochka oylarini kiriting:', reply_markup=months())
+        await message.answer('Nasiya savdo oylarini kiriting:', reply_markup=months())
 
     elif message.text == "O'tkazib yuborish ➡️":
         data = await state.get_data()
@@ -136,7 +162,7 @@ async def avans_handler(message: Message, state: FSMContext) -> None:
         await state.set_data(data)
 
         await state.set_state(Add_order.rasrochka_vaqti)
-        await message.answer('Rasrochka oylarini kiriting:', reply_markup=months())
+        await message.answer('Nasiya savdo oylarini kiriting:', reply_markup=months())
     else:
         await message.answer("Boshlang'ich to'lovni faqat raqamlar bilan $ hisobida kiriting!")
         await state.set_state(Add_order.avans)
@@ -234,12 +260,13 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
 
         datas = [
             f"<b>Mijoz ismi:</b> {mijoz}",
-            f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
-            f"<b>Mahsulotlar:</b> {data.get('product_name', 'N/A')}",
-            f"<b>Mahsulot tan narxi:</b> {data.get('product_price', 'N/A')} $",
-            f"<b>Boshlang'ich to'lov:</b> {data.get('avans', 'N/A')} $",
-            f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
-            f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
+            f"<b>Telefon raqami:</b> {data.get('phone', '')}",
+            f"<b>Buyurtma guruhi:</b> {data.get('product_category', '')}",
+            f"<b>Mahsulotlar:</b> {data.get('product_name', '')}",
+            f"<b>Mahsulot tan narxi:</b> {data.get('product_price', '')} $",
+            f"<b>Boshlang'ich to'lov:</b> {data.get('avans', '')} $",
+            f"<b>Nasiya savdo muddati:</b> {data.get('rasrochka_muddati', '')} oy",
+            f"<b>Qo'shilgan foiz:</b> {data.get('ustama', '')} %",
             f"<b>To'lov qilish sanasi har oyning:</b> {today.strftime('%d')} chi sanasida\n",
             f"<b>Mahsulot tan narxi :</b>  {price:.2f} $\n"
             f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n\n",
@@ -287,10 +314,17 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
         payment_schedule.append(payment_date.strftime('%Y %B %d'))
         pay.append(payment_date.date())
     ic(pay[0])
+    try:
+        # Retrieve the Category instance
+        category_instance = Category.objects.get(name=data['product_category'])
+    except ObjectDoesNotExist:
+        raise ValueError(f"Category '{data['product_category']}' does not exist. Please ensure the category is valid.")
+
 
     Installment.objects.create(
         user=user1 ,
         product=data['product_name'],
+        category=category_instance,
         price=data['product_price'],
         starter_payment=data['avans'],
         payment_months=int(rasrochka_muddati_txt),
@@ -434,12 +468,13 @@ async def edit_date_handler(msg: Message, state: FSMContext) -> None:
     foiz_miqdori= (price-avans)*(ustama/100)
     details = [
         f"<b>Mijoz ismi:</b> {mijoz}",
-        f"<b>Telefon raqami:</b> {data.get('phone', 'N/A')}",
-        f"<b>Mahsulotlar:</b> {data.get('product_name', 'N/A')}",
-        f"<b>Mahsulot tan narxi:</b> {data.get('product_price', 'N/A')} $",
-        f"<b>Boshlang'ich to'lov:</b> {data.get('avans', 'N/A')} $",
-        f"<b>Rasrochka muddati:</b> {data.get('rasrochka_muddati', 'N/A')} oy",
-        f"<b>Qo'shilgan foiz:</b> {data.get('ustama', 'N/A')} %",
+        f"<b>Telefon raqami:</b> {data.get('phone', '')}",
+        f"<b>Buyurtma guruhi:</b> {data.get('product_category', '')}",
+        f"<b>Mahsulotlar:</b> {data.get('product_name', '')}",
+        f"<b>Mahsulot tan narxi:</b> {data.get('product_price', '')} $",
+        f"<b>Boshlang'ich to'lov:</b> {data.get('avans', '')} $",
+        f"<b>Nasiya savdo muddati:</b> {data.get('rasrochka_muddati', '')} oy",
+        f"<b>Qo'shilgan foiz:</b> {data.get('ustama', '')} %",
         f"<b>To'lov qilish sanasi har oyning:</b> {edited_date}-chi sanasida",
         f"<b>To'liq summa :</b>  {price:.2f} $\n"
         f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
