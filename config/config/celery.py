@@ -11,19 +11,14 @@ app = Celery("config")
 
 
 app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()
 
 
 app.conf.beat_schedule = {
-    "run-daily-task": {
-        "task": "data.logs.tasks.daily_task",
-        "schedule": crontab(minute=30, hour=1),  # Run every day at 9:10 AM
+    'send-daily-messages': {
+        'task': 'bot.tasks.send_daily_message',
+        'schedule': crontab(hour=9, minute=0),
     },
-    # "run-hourly-task": {
-    #    "task": "data.logs.tasks.mark_as_gone",
-    #    # "schedule": crontab(minute=0),  # Run every hour at the 0th minute
-    #    # "schedule": crontab(hour=20, minute=24),  # Run every hour at the 0th minute
-    #    "schedule": 1,  # Run every hour at the 0th minute
-    # },
 }
 
-# app.autodiscover_tasks(lambda: ["data"])
+app.conf.timezone = "Asia/Tashkent"
