@@ -36,7 +36,7 @@ async def send_async_message(chat_id, text):
     """
     try:
         # Ensure you use an instance of Bot
-        await bot.send_message(chat_id, text=text, parse_mode="Markdown")
+        await bot.send_message(chat_id, text=text, parse_mode=ParseMode.HTML)
         logging.info(f"Message sent to chat_id {chat_id}.")
     except Exception as e:
         logging.error(f"Failed to send message to chat_id {chat_id}: {e}")
@@ -59,7 +59,7 @@ def send_daily_message():
     for payment in upcoming_payments:
         user_chat_id = payment.user.chat_id  # Assuming `user` relation has a `chat_id` field
         message_text = (
-            f"Assalomu alaykum! Sizning nasiya savdo bo'yicha xaridingizning "
+            f"Assalomu alaykum! Sizning nasiya savdo bo'yicha <b>{ payment.product }</b> xaridingizning  "
             f"keyingi to'lov muddati {payment.next_payment_dates}. "
             f"To'lovni o'z vaqtida amalga oshiring."
         )
