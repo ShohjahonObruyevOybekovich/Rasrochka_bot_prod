@@ -31,6 +31,9 @@ async def list_customers(message: Message, state: FSMContext):
         switch_inline_query_current_chat=""
         # This will be used to handle the button press
     )
+    user = User.objects.filter(role="CLIENT")
+    for installment in user:
+        ic(installment.phone)
 
     inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
     await message.answer("Mijozni tanlang yoki qidiring:",
@@ -38,31 +41,40 @@ async def list_customers(message: Message, state: FSMContext):
 
 
 from django.db.models import Q
+
 @dp.inline_query()
 async def search_customers(inline_query: InlineQuery):
     query = inline_query.query.strip()
     results = []
 
-    user = Installment.objects.filter(
-        status__iexact="ACTIVE"
-    ).select_related('user')  # Efficient querying
+    # Ensure the query is valid
+    if not query:
+        await inline_query.answer([], cache_time=0, is_personal=True)
+        return
 
-    ic(user)
+    # Debugging: Check the query input
+    ic(query)
 
-    for users in user:
-        ic(users)
+    # Filter installments dynamically based on the query
+    user = User.objects.filter(role="CLIENT")
+
+    ic(user)  # Debugging: Check filtered results
+
+    # Generate inline query results
+    for installment in user:
         results.append(
             InlineQueryResultArticle(
-                id=str(users.id),
-                title=f"{users.user.full_name} ({users.user.phone})",
+                id=str(installment.id),
+                title=f"{installment.user.full_name} ({installment.user.phone})",
                 input_message_content=InputTextMessageContent(
-                    message_text=f"Tanlangan mijoz:\nID: {users.id} \n{users.user.full_name} ({users.user.phone})"
+                    message_text=f"Tanlangan mijoz:\nID: {installment.id} \n{installment.user.full_name} ({installment.user.phone})"
                 ),
                 description="Mijoz haqida ma'lumotni ko'rish"
             )
         )
-    await inline_query.answer(results, cache_time=0, is_personal=True)
 
+    # Answer the inline query
+    await inline_query.answer(results, cache_time=0, is_personal=True)
 
 
 @dp.message(PaymentFlow.customer_selection)
@@ -240,6 +252,8 @@ async def handle_payment_amount(message: Message, state: FSMContext):
             installment.update_status()
             await message.answer(f"Mijoz qarizdorligi yakunlandi")
             user_chat_id = installment.user.chat_id
+            installment.user.role = "User"
+            installment.user.save()
             if user_chat_id:
                 await message.bot.send_message(
                     chat_id=installment.user.chat_id,
@@ -492,6 +506,8 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
         # Mark the order as completed or canceled
         installment.status = "COMPLETED"
         installment.save()
+        installment.user.role = "USER"
+        installment.user.save()
 
         sms_service = SayqalSms()
         sms_service.send_sms(

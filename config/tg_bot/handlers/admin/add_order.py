@@ -360,6 +360,8 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
         start_date=pay[0],
         next_payment_dates = pay[0],
     )
+    user1.role = "CLIENT"
+    user1.save()
     # user.client = True
     # user.save()
     price = Decimal(data.get("product_price", 0))

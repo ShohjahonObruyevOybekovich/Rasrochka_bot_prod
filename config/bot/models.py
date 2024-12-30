@@ -10,12 +10,13 @@ class User(models.Model):
     full_name = models.CharField(max_length=255,null=True, blank=True)
     phone = models.CharField(max_length=255,null=True, blank=True)
     role = models.CharField(max_length=255,null=True,blank=True,
-                            choices=[('ADMIN', 'admin'), ('USER', 'user')], default='USER')
+                            choices=[('ADMIN', 'admin'), ('USER', 'user'),("CLIENT","CLIENT")], default='USER')
     # client = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
+    def __str__(self):
+        return self.full_name
 
 
 class Installment(models.Model):
@@ -28,7 +29,7 @@ class Installment(models.Model):
     additional_fee_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     start_date = models.DateField(null=True, blank=True)
     next_payment_dates = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=50, choices=[('ACTIVE', 'Active'), ('COMPLETED', 'Completed')], default='ACTIVE')
+    status = models.CharField(max_length=50, choices=[('ACTIVE', 'ACTIVE'), ('COMPLETED', 'COMPLETED')], default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

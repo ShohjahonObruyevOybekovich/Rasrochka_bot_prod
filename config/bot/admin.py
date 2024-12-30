@@ -28,3 +28,6 @@ class SmsAdmin(admin.ModelAdmin):
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ["name"]
 
+
+
+
