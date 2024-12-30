@@ -43,8 +43,10 @@ async def search_customers(inline_query: InlineQuery):
     query = inline_query.query.strip()
     results = []
 
+    user = Installment.objects.filter(
+        status__iexact="ACTIVE"
+    ).select_related('user')  # Efficient querying
 
-    user = User.objects.filter(phone=query,installments__status="ACTIVE").all()
     ic(user)
 
     for users in user:
@@ -52,9 +54,9 @@ async def search_customers(inline_query: InlineQuery):
         results.append(
             InlineQueryResultArticle(
                 id=str(users.id),
-                title=f"{users.full_name} ({users.phone})",
+                title=f"{users.user.full_name} ({users.user.phone})",
                 input_message_content=InputTextMessageContent(
-                    message_text=f"Tanlangan mijoz:\nID: {users.id} \n{users.full_name} ({users.phone})"
+                    message_text=f"Tanlangan mijoz:\nID: {users.id} \n{users.user.full_name} ({users.user.phone})"
                 ),
                 description="Mijoz haqida ma'lumotni ko'rish"
             )

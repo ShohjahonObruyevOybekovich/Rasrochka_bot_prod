@@ -14,7 +14,7 @@ async def command_start_handler(message: Message) -> None:
     installments = Installment.objects.all()
 
     if not installments:
-        await message.answer("To'lovlari yakunlangan buyurtmalar mavjud emas!.")
+        await message.answer("Buyurtmalar mavjud emas!.")
         return
 
     # Prepare the data for Excel
