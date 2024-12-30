@@ -7,7 +7,7 @@ orders_list_txt = "Buyurtmalar ro'yxati"
 
 ortga = "🔙 Ortga"
 
-order_history_txt = "Buyurtmalar tarixi"
+order_history_txt = "Buyurtmalar hisoboti"
 orders_txt = "Buyurtmalar"
 add_order = "Buyurtma qo'shish"
 back_to_user = "Foydalanuvchi bo'limiga qaytish"

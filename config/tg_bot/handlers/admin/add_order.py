@@ -102,6 +102,15 @@ async def product_name_handler(message: Message, state: FSMContext) -> None:
     data['product_category'] = message.text
     await state.set_data(data)
 
+    try:
+        # Check if the category exists in the database
+        category = Category.objects.get(name=data['product_category'])
+    except Category.DoesNotExist:
+        # Handle the case where the category does not exist
+        await message.answer("Buyurtmalar guruhini faqat mavjud bo'lgan ro'yxatdan tanlang!")
+        await state.set_state(Add_order.product_category)
+        return
+
     await state.set_state(Add_order.product_name)
     await message.answer("Buyurtmalarning nomini kiriting:", reply_markup=back())
 
@@ -247,7 +256,15 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
         for month in range(rasrochka_months):
             month_num = (start_day.month + month - 1) % 12 + 1
             year_adjustment = (start_day.month + month - 1) // 12
-            payment_date = start_day.replace(year=start_day.year + year_adjustment, month=month_num, day=today.day)
+            payment_year = start_day.year + year_adjustment
+
+            # Get the last day of the target month
+            last_day_of_month = calendar.monthrange(payment_year, month_num)[1]
+
+            # Use the minimum of today's day or the last day of the target month
+            payment_day = min(today.day, last_day_of_month)
+
+            payment_date = start_day.replace(year=payment_year, month=month_num, day=payment_day)
 
             if month == rasrochka_months - 1:
                 payment_schedule.append(f"{payment_date.strftime('%d %B %Y')}: {last_month_payment:.2f}$")
@@ -279,6 +296,7 @@ async def ustama_handler(message: Message, state: FSMContext) -> None:
         # Send the confirmation message with payment schedule
         await message.answer("\n".join(datas), reply_markup=accept())
     except Exception as e:
+        ic(e)
         await message.answer("Buyurtma qo'shishda xatolik, iltimos sintaksis qoidalariga amal qiling!",
                              reply_markup=admin_btn())
         await state.clear()
@@ -306,14 +324,24 @@ async def confirm_handler(call: CallbackQuery, state: FSMContext) -> None:
     start_day = today.replace(day=1) + relativedelta(months=1)
 
     for month in range(int(rasrochka_muddati_txt)):
+        # Calculate the target month and year
         month_num = (start_day.month + month - 1) % 12 + 1
         year_adjustment = (start_day.month + month - 1) // 12
-        payment_date = start_day.replace(year=start_day.year + year_adjustment,
-                                         month=month_num, day=today.day)
+        payment_year = start_day.year + year_adjustment
 
+        # Get the last valid day of the target month
+        last_day_of_month = calendar.monthrange(payment_year, month_num)[1]
+
+        # Use the smaller of today's day or the last day of the month
+        payment_day = min(today.day, last_day_of_month)
+
+        # Create the payment date
+        payment_date = start_day.replace(year=payment_year, month=month_num, day=payment_day)
+
+        # Append the formatted date to the schedule
         payment_schedule.append(payment_date.strftime('%Y %B %d'))
         pay.append(payment_date.date())
-    ic(pay[0])
+        ic(pay[0])
     try:
         # Retrieve the Category instance
         category_instance = Category.objects.get(name=data['product_category'])
