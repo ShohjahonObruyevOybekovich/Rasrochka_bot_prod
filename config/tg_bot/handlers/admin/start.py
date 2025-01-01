@@ -44,6 +44,7 @@ async def handle_phone_number(message: Message, state: FSMContext) -> None:
     # Extract the phone number
     if message.contact:
         phone_number = message.contact.phone_number
+        phone_number = format_phone_number(phone_number)
     elif message.text and re.match(r"^\+\d{9,13}$", message.text):
         phone_number = message.text
     else:

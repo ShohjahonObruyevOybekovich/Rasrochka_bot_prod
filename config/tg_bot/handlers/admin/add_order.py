@@ -46,11 +46,13 @@ async def phone_handler(msg: Message, state: FSMContext) -> None:
 
     try:
         phone = format_phone_number(msg.text)
+        ic(phone)
     except Exception as e:
         await msg.answer("Raqam uzunligi notugri kiritildi iltimos tekshirib qaytadan kiriting!")
         await state.clear()
         await state.set_state(Add_order.phone)
         return
+
 
     data = await state.get_data()
 

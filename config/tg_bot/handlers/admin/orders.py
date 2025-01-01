@@ -56,7 +56,7 @@ async def search_customers(inline_query: InlineQuery):
     ic(query)
 
     # Filter installments dynamically based on the query
-    user = User.objects.filter(role="CLIENT")
+    user = Installment.objects.filter(status="ACTIVE").all()
 
     ic(user)  # Debugging: Check filtered results
 
