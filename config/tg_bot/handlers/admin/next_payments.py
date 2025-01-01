@@ -78,7 +78,7 @@ async def payments_summary(message: Message):
 
             # Escape user data
             full_name = escape(installment.user.full_name)
-            phone = escape(installment.user.phone)
+            phone = escape(installment.user.phone) if installment.user.phone else ""
             product = escape(installment.product)
 
             response += (
@@ -101,7 +101,7 @@ async def payments_summary(message: Message):
 
             # Escape user data
             full_name = escape(payment.user.full_name)
-            phone = escape(payment.user.phone)
+            phone = escape(payment.user.phone) if payment.user.phone else ""
             product = escape(payment.product)
 
             response += (
