@@ -13,7 +13,7 @@ from bot.models import User, Installment, Payment, Sms
 from dispatcher import dp
 from sms import SayqalSms
 from tg_bot.buttons.inline import  reply_payment
-from tg_bot.buttons.reply import admin_btn, back
+from tg_bot.buttons.reply import admin_btn, back, months
 from tg_bot.buttons.text import *
 from tg_bot.handlers.admin.add_payment import start_payment, inline_search_handler
 from tg_bot.state.main import *
@@ -538,3 +538,61 @@ async def confirm_cancel_order(callback_query: CallbackQuery, state: FSMContext)
 async def cancel_action(callback_query: CallbackQuery):
     await callback_query.message.edit_reply_markup(reply_markup=None)
     await callback_query.message.answer("Amal bekor qilindi.", reply_markup=admin_btn())
+
+
+@dp.callback_query(lambda call: call.data.startswith("change_monthes:"))
+async def handle_change_monthes(callback_query: CallbackQuery, state: FSMContext):
+    try:
+        order_id = int(callback_query.data.split(":")[1])
+        await state.update_data(order_id=order_id)
+
+        # Ask for the new payment months
+        await callback_query.message.answer(
+            "Nasiya savdo muddatini o'zgartirish uchun yangi muddatni kiriting (oylar soni):",
+            reply_markup=months()
+        )
+        await state.set_state(PaymentFlow.change_monthes)
+    except Exception as e:
+        await callback_query.message.answer(f"Xatolik yuz berdi: {str(e)}")
+
+
+# State handler for editing payment months
+@dp.message(PaymentFlow.change_monthes)
+async def process_change_monthes(message: Message, state: FSMContext):
+    try:
+        if message.text == ortga:
+            await message.answer("Admin menyu:", reply_markup=admin_btn())
+            await state.clear()
+            return
+
+        new_monthes = message.text.strip()
+
+        # Extract numeric value from predefined options or validate user input
+        if "oylik" in new_monthes:
+            new_monthes = new_monthes.split()[0]  # Extract the numeric part
+        if not new_monthes.isdigit() or int(new_monthes) <= 0:
+            await message.answer(
+                "Nasiya savdo muddatini noto'g'ri formatda kiritdingiz. Iltimos, musbat raqam kiriting (oylar soni):",
+                reply_markup=months()
+            )
+            return
+
+        new_monthes = int(new_monthes)
+        data = await state.get_data()
+        order_id = data.get("order_id")
+        installment = await sync_to_async(Installment.objects.get)(id=order_id)
+
+        # Update the payment months
+        installment.payment_months = new_monthes
+        installment.save()
+
+        # Notify success
+        await message.answer(
+            f"Nasiya savdo muddati o'zgartirildi: {new_monthes} oylar.",
+            reply_markup=admin_btn()
+        )
+        await state.clear()
+
+    except Exception as e:
+        await message.answer(f"Nasiya savdo muddatini o'zgartirishda xatolik yuz berdi: {str(e)}")
+        await state.clear()

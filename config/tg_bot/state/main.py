@@ -23,6 +23,7 @@ class PaymentState(StatesGroup):
 class PaymentFlow(StatesGroup):
     customer_selection = State()
     order_selection = State()
+    change_monthes = State()
     add_payment = State()
     enter_amount = State()
     edit_fee = State()
