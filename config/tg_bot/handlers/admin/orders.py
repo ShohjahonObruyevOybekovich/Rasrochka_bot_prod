@@ -177,7 +177,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
                 f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
                 f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
                 f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-                f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + starter_payment + foiz_miqdori):.2f}$\n"
+                f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + foiz_miqdori):.2f}$\n"
                 f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
                 f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
         )
@@ -461,8 +461,7 @@ async def process_edit_fee(message: Message, state: FSMContext):
                     f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
                     f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
                     f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
-                    f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + 
-                                     starter_payment + foiz_miqdori):.2f}$\n"
+                    f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + foiz_miqdori):.2f}$\n"
                     f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
                     f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
             )
