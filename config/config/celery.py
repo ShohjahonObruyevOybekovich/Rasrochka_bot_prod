@@ -19,6 +19,10 @@ app.conf.beat_schedule = {
         'task': 'bot.tasks.send_daily_message',
         'schedule': crontab(hour=9, minute=0),
     },
+    'send_daily_message-to-admin' : {
+        'task': 'bot.tasks.send_daily_message_to_admin',
+        'schedule': crontab(hour=9, minute=0),
+    }
 }
 
 app.conf.timezone = "Asia/Tashkent"

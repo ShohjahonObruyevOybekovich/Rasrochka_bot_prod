@@ -11,7 +11,7 @@ from aiogram import Bot
 from config.celery import app
 from dispatcher import Dispatcher, TOKEN
 
-from bot.models import Installment, Sms
+from bot.models import Installment, Sms, User
 from sms import SayqalSms
 
 bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -49,6 +49,18 @@ async def send_async_message(chat_id, text, phone):
     except Exception as e:
         logging.error(f"Failed to send message to chat_id {chat_id}: {e}")
 
+
+async def send_async_messages_to_admin(chat_id, text):
+    try:
+        await bot.send_message(chat_id,text=text, parse_mode=ParseMode.HTML)
+        logging.info(f"Message sent to chat_id {chat_id}.")
+        logging.info(f"Message sent to admin {text}.")
+    except Exception as e:
+        logging.error(f"Failed to send message to chat_id {chat_id}: {e}")
+
+
+
+
 @app.task
 def send_daily_message():
     """
@@ -68,9 +80,36 @@ def send_daily_message():
         user_chat_id = payment.user.chat_id  # Assuming `user` relation has a `chat_id` field
         message_text = (
             f"Assalomu alaykum! Sizning nasiya savdo bo'yicha <b>{ payment.product }</b> xaridingizning  "
-            f"keyingi to'lov muddati {payment.next_payment_dates}. "
+            f"keyingi to'lov sanasi {payment.next_payment_dates}. "
             f"To'lovni o'z vaqtida amalga oshiring."
         )
         asyncio.run(send_async_message(user_chat_id, message_text,payment.user.phone))
 
     logging.info("Celery task completed.")
+
+@app.task
+def send_daily_message_to_admin():
+    logging.info("Celery task started: Sending daily messages to admins...")
+    admins = User.objects.filter(role="ADMIN").all()
+    today = date.today()
+    five_days_later = today + timedelta(days=5)
+    one_day_later = today + timedelta(days=1)
+    for admin in admins:
+        print(admin)
+
+        upcoming_payments = asyncio.run(get_upcoming_payments(one_day_later, five_days_later))
+
+        # Iterate over each payment and send a message
+        for payment in upcoming_payments:
+            user_chat_id = admin.chat_id  # Assuming `user` relation has a `chat_id` field
+            message_text = (
+                f"To'lov amalga oshirishi kerak bo'lgan mijoz: \n"
+                f" <b>{payment.user.full_name}</b> - {payment.user.phone}\n "
+                f"keyingi to'lov sanasi {payment.next_payment_dates}.\n "
+                f"Maxsulot: <b>{payment.product}</b>."
+            )
+            print(user_chat_id, payment.user.phone,)
+            asyncio.run(send_async_messages_to_admin(user_chat_id, message_text))
+
+
+logging.info("Celery task completed.")

@@ -1,3 +1,4 @@
+import types
 from datetime import date, datetime
 from decimal import Decimal, ROUND_CEILING
 from pyexpat.errors import messages
@@ -13,7 +14,7 @@ from bot.models import User, Installment, Payment, Sms
 from dispatcher import dp
 from sms import SayqalSms
 from tg_bot.buttons.inline import  reply_payment
-from tg_bot.buttons.reply import admin_btn, back, months
+from tg_bot.buttons.reply import admin_btn, back, months, back_admin
 from tg_bot.buttons.text import *
 from tg_bot.handlers.admin.add_payment import start_payment, inline_search_handler
 from tg_bot.state.main import *
@@ -187,7 +188,7 @@ async def handle_customer_selection(message: Message, state: FSMContext):
         await message.answer(
             order_details,
             parse_mode="HTML",
-            reply_markup=reply_payment(order)  # Ensure reply_payment generates buttons with unique order IDs
+            reply_markup=reply_payment(order)
         )
     await message.answer("Buyurtmalar...", reply_markup=back())
 
@@ -469,6 +470,7 @@ async def process_edit_fee(message: Message, state: FSMContext):
 
         for order_details in order_details_list:
             await message.answer(order_details, parse_mode="HTML", reply_markup=reply_payment(order))
+            await message.answer("Buyurtma ... ", reply_markup=back_admin())
         await state.clear()
     except Exception as e:
         await message.answer(f"Foiz miqdorini o'zgartirishda xatolik yuz berdi: {str(e)}")
@@ -555,7 +557,7 @@ async def handle_change_monthes(callback_query: CallbackQuery, state: FSMContext
         await callback_query.message.answer(f"Xatolik yuz berdi: {str(e)}")
 
 
-# State handler for editing payment months
+
 @dp.message(PaymentFlow.change_monthes)
 async def process_change_monthes(message: Message, state: FSMContext):
     try:
@@ -581,17 +583,108 @@ async def process_change_monthes(message: Message, state: FSMContext):
         order_id = data.get("order_id")
         installment = await sync_to_async(Installment.objects.get)(id=order_id)
 
-        # Update the payment months
+        # Update the installment fee
         installment.payment_months = new_monthes
         installment.save()
 
-        # Notify success
-        await message.answer(
-            f"Nasiya savdo muddati o'zgartirildi: {new_monthes} oylar.",
-            reply_markup=admin_btn()
-        )
-        await state.clear()
+        try:
+            orders = Installment.objects.filter(id=order_id, status="ACTIVE")
+            if not orders.exists():
+                await message.answer("Buyurtmalar topilmadi.", reply_markup=admin_btn())
+                await state.clear()
+                return
+            sorted_orders = sorted(orders, key=lambda x: x.product.lower())  # Sort by product name, case insensitive
+        except Exception as e:
+            await message.answer(str(e), reply_markup=admin_btn())
+            await state.clear()
+            return
 
+        page_size = 10
+        page = 1
+        start = (page - 1) * page_size
+        end = page * page_size
+        orders_page = sorted_orders[start:end]
+
+        order_details_list = []
+        for order in orders_page:
+            # Extract order details
+            customer_name = order.user.full_name
+            phone_number = order.user.phone
+            products = order.product
+            category = order.category.name
+            product_price = Decimal(order.price)
+            starter_payment = Decimal(order.starter_payment)
+            installment_period = order.payment_months
+            interest_rate = Decimal(order.additional_fee_percentage)
+
+            foiz_miqdori = (product_price - starter_payment) * (interest_rate / 100)
+
+            # Calculate overall payment
+            overall_price = (product_price - starter_payment) + (
+                    (product_price - starter_payment) * interest_rate / 100)
+            total_paid = sum(p.amount for p in order.payments.all())
+            remaining_balance = overall_price - total_paid
+
+            # Calculate monthly payments
+            base_monthly_payment = overall_price / installment_period
+            rounded_monthly_payment = base_monthly_payment.quantize(Decimal('1'), rounding=ROUND_CEILING)
+            last_month_payment = overall_price - rounded_monthly_payment * (installment_period - 1)
+
+            payment_schedule = []
+            applied_payments = Decimal(0)
+            start_day = order.start_date
+
+            for month in range(installment_period):
+                payment_date = start_day + relativedelta(months=month)
+
+                # Determine the expected payment for this month
+                expected_payment = last_month_payment if month == installment_period - 1 else rounded_monthly_payment
+
+                if applied_payments + expected_payment <= total_paid:
+                    # Fully paid month
+                    payment_status = "✅"
+                    applied_payments += expected_payment
+                elif applied_payments < total_paid:
+                    # Partially paid month
+                    remaining_for_month = total_paid - applied_payments
+                    payment_status = f"🟢 ({remaining_for_month:.2f} $ ✅)"
+                    applied_payments += remaining_for_month
+                else:
+                    # Unpaid month
+                    payment_status = "❗️"
+
+                # Add to payment schedule
+                payment_schedule.append(
+                    f"{payment_date.strftime('%d.%m.%Y')}: {expected_payment:.2f}$ {payment_status}"
+                )
+            # Append order details
+            order_details = (
+                    f"<b>Mijoz ismi:</b>  {customer_name}\n"
+                    f"<b>Telefon raqami:</b>  {phone_number}\n"
+                    f"<b>Mahsulotlar guruhi:</b> {category}\n"
+                    f"<b>Mahsulotlar:</b>  {products}\n"
+                    f"<b>Mahsulot tan narxi:</b>  {product_price:.2f} $\n"
+                    f"<b>Boshlang'ich to'lov:</b>  {starter_payment:.2f} $\n"
+                    f"<b>Nasiya savdo muddati:</b>  {installment_period} oylik\n"
+                    f"<b>Qo'shilgan foiz:</b>  {interest_rate:.2f} %\n"
+                    f"<b>To'lov qilish sanasi har oyning:</b>  {start_day.day} da\n\n"
+                    f"<b>To'liq summa :</b>  {product_price:.2f} $\n"
+                    f"<b>Qo'shilgan foiz miqdori:</b>  {foiz_miqdori:.2f} $\n"
+                    f"<b>Jami ustama bilan hisoblangan narx:</b>  {(product_price + foiz_miqdori):.2f}$\n"
+                    f"<b>Qolgan to'lov miqdori:</b>  {remaining_balance:.2f}$\n\n"
+                    f"<b>To'lov jadvali:</b>\n" + "\n".join(payment_schedule)
+            )
+            order_details_list.append(order_details)
+
+        for order_details in order_details_list:
+            await message.answer(order_details, parse_mode="HTML", reply_markup=reply_payment(order))
+            await message.answer("Buyurtmalar...", reply_markup=back_admin())
+        await state.clear()
     except Exception as e:
         await message.answer(f"Nasiya savdo muddatini o'zgartirishda xatolik yuz berdi: {str(e)}")
         await state.clear()
+
+@dp.message(lambda message: message.text.startswith("Admin menu:"))
+async def admin_menu(message:Message):
+    await message.answer("Admin menusi:", reply_markup=admin_btn())
+

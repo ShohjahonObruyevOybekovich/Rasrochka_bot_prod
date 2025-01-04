@@ -41,8 +41,9 @@ async def command_start_handler(message: Message) -> None:
         payment_dates_str = "\n".join(payment_dates)  # Join dates with a newline for vertical stacking
 
         # Calculate the payment schedule based on `starter_date` and `rasrochka_months`
-        rasrochka_months = int(installment.starter_payment)  # Assuming `starter_payment` is the number of months
+        rasrochka_months = int(installment.payment_months)  # Assuming `starter_payment` is the number of months
         payment_schedule = []
+
         today = datetime.today()
 
         # Assuming the `starter_date` is the date the installment starts

@@ -109,7 +109,7 @@ async def payments_summary(message: Message):
                 f"<b>Mijoz raqami:</b> {phone}\n"
                 f"<b>Mahsulot:</b> {product}\n"
                 f"<b>Miqdor:</b> {paymanet_amount} $\n"
-                f"<b>To'lov sanasi:</b> {payment.next_payment_dates}\n"
+                f"<b>To'lov sanasi:</b> {payment.next_payment_dates}\n\n"
             )
     else:
         response += "Keyingi 10 kunda tushadigan to'lovlar mavjud emas.\n"

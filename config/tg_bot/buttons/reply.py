@@ -72,3 +72,8 @@ def months():
 def start_btn():
     start = KeyboardButton(text = "start")
     return ReplyKeyboardMarkup(keyboard=[[start]] , resize_keyboard=True)
+
+def back_admin():
+    keyboard1 = KeyboardButton(text = "Admin menu:")
+    design = [[keyboard1]]
+    return ReplyKeyboardMarkup(keyboard=design , resize_keyboard=True)
