@@ -42,7 +42,6 @@ async def command_start_handler(message: Message) -> None:
     # Generate summary report
     summary_report = (
         f"<b>Jami qolgan to'lovlar:</b> {total_remaining_price:.2f} $\n"
-        f"<b>Jami to'langan miqdor:</b> {total_paid:.2f} $\n"
         f"<b>Jami foyda:</b> {total_profit:.2f} $"
     )
 

@@ -21,7 +21,7 @@ app.conf.beat_schedule = {
     },
     'send_daily_message-to-admin' : {
         'task': 'bot.tasks.send_daily_message_to_admin',
-        'schedule': crontab(hour=18, minute=50),
+        'schedule': crontab(hour=18, minute=52),
     }
 }
 
