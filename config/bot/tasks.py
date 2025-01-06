@@ -87,20 +87,29 @@ def send_daily_message():
 
     logging.info("Celery task completed.")
 
+from asgiref.sync import async_to_sync
+
 @app.task
 def send_daily_message_to_admin():
+    """
+    Celery task to send daily messages to admins regarding upcoming payments.
+    """
     logging.info("Celery task started: Sending daily messages to admins...")
+
+    # Get admin users
     admins = User.objects.filter(role="ADMIN").all()
+
+    # Prepare date range
     today = date.today()
     five_days_later = today + timedelta(days=5)
     one_day_later = today + timedelta(days=1)
+
+    # Fetch upcoming payments asynchronously
+    upcoming_payments = async_to_sync(get_upcoming_payments)(one_day_later, five_days_later)
+
     for admin in admins:
-        print(admin)
-
-        upcoming_payments = asyncio.run(get_upcoming_payments(one_day_later, five_days_later))
-
-        # Iterate over each payment and send a message
         for payment in upcoming_payments:
+            # Prepare the message for each admin
             user_chat_id = admin.chat_id  # Assuming `user` relation has a `chat_id` field
             message_text = (
                 f"To'lov amalga oshirishi kerak bo'lgan mijoz: \n"
@@ -108,8 +117,15 @@ def send_daily_message_to_admin():
                 f"keyingi to'lov sanasi {payment.next_payment_dates}.\n "
                 f"Maxsulot: <b>{payment.product}</b>."
             )
-            print(user_chat_id, payment.user.phone,)
-            asyncio.run(send_async_messages_to_admin(user_chat_id, message_text))
+
+            # Send the message asynchronously
+            try:
+                async_to_sync(send_async_messages_to_admin)(user_chat_id, message_text)
+                logging.info(f"Message successfully sent to admin chat_id {user_chat_id}.")
+            except Exception as e:
+                logging.error(f"Failed to send message to admin chat_id {user_chat_id}: {e}")
+
+    logging.info("Celery task completed: Admin notifications sent.")
 
 
 logging.info("Celery task completed.")
