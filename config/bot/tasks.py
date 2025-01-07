@@ -1,14 +1,13 @@
 import os
 import logging
 from requests import post
-from celery import Celery
 from datetime import date, timedelta
 from bot.models import Installment, User
 from dotenv import load_dotenv
-
+from config.celery import app
 load_dotenv()
 # Celery setup
-app = Celery('tasks', broker='redis://localhost:6379/0')
+# app = Celery('tasks', broker='redis://localhost:6379/0')
 
 # Logger setup
 logging.basicConfig(level=logging.INFO)
@@ -83,6 +82,7 @@ def send_daily_message():
 
     for payment in upcoming_payments:
         user_chat_id = payment.user.chat_id
+        print(user_chat_id)
         user_phone = payment.user.phone
         message_text = (
             f"Assalomu alaykum! Sizning nasiya savdo bo'yicha <b>{payment.product}</b> xaridingizning "
@@ -120,6 +120,8 @@ def send_daily_message_to_admin():
 
     for admin in admins:
         admin_chat_id = admin.chat_id
+        print(admin_chat_id)
+
 
         for payment in upcoming_payments:
             user_full_name = payment.user.full_name
