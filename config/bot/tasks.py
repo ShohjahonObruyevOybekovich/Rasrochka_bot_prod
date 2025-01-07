@@ -1,13 +1,14 @@
 import os
 import logging
 from requests import post
+from celery import Celery
 from datetime import date, timedelta
 from bot.models import Installment, User
 from dotenv import load_dotenv
-from config.celery import app
+# from config.celery import app
 load_dotenv()
 # Celery setup
-# app = Celery('tasks', broker='redis://localhost:6379/0')
+app = Celery('tasks', broker='redis://localhost:6378/0')
 
 # Logger setup
 logging.basicConfig(level=logging.INFO)
