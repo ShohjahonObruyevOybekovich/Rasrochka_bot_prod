@@ -17,11 +17,11 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'send-daily-messages': {
         'task': 'bot.tasks.send_daily_message',
-        'schedule': crontab(minute='*'),
+        'schedule': crontab(hour=12,minute=25),
     },
     'send_daily_message-to-admin' : {
         'task': 'bot.tasks.send_daily_message_to_admin',
-        'schedule': crontab(minute='*'),
+        'schedule': crontab(hour=12,minute=25),
     }
 }
 
