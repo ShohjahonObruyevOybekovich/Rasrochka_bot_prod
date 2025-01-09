@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from icecream import ic
 
-from bot.models import Payment, Installment, Sms
+from bot.models import Payment, Installment
 
 
 def process_monthly_payment(user, order_id, amount):

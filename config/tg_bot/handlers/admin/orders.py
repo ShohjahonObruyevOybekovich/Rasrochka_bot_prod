@@ -1,7 +1,6 @@
 import types
 from datetime import date, datetime
 from decimal import Decimal, ROUND_CEILING
-from pyexpat.errors import messages
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, CallbackQuery, Message
@@ -293,8 +292,10 @@ async def handle_payment_amount(message: Message, state: FSMContext):
 
             sms_service = SayqalSms()
             sms_service.send_sms(
-                message=f"To'lov qo'shildi: {amount} dollar.\n"
-                        f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
+                message=f"AB Nasiya bot:\n"
+                        f"To'lov qo'shildi: {amount} dollar.\n"
+                        f"Qolgan to'lov miqdori: {remaining_balance} dollar.\n"
+                        f"Qo'shimcha ma'lumotlar uchun @ab_nasiya_bot ga a'zo bo'ling!",
                 number=installment.user.phone
             )
 
@@ -308,8 +309,10 @@ async def handle_payment_amount(message: Message, state: FSMContext):
             )
             sms_service = SayqalSms()
             sms_service.send_sms(
-                message=f"To'lov qo'shildi: {amount} dollar.\n"
-                        f"Qolgan to'lov miqdori: {remaining_balance} dollar.",
+                message=f"AB Nasiya bot:\n"
+                f"To'lov qo'shildi: {amount} dollar.\n"
+                f"Qolgan to'lov miqdori: {remaining_balance} dollar.\n"
+                f"Qo'shimcha ma'lumotlar uchun @ab_nasiya_bot ga a'zo bo'ling!",
                 number=installment.user.phone
             )
             sms = Sms()
@@ -684,7 +687,7 @@ async def process_change_monthes(message: Message, state: FSMContext):
         await message.answer(f"Nasiya savdo muddatini o'zgartirishda xatolik yuz berdi: {str(e)}")
         await state.clear()
 
-@dp.message(lambda message: message.text.startswith("Admin menu:"))
-async def admin_menu(message:Message):
+@dp.message(lambda message:message.text.startswith("Admin menu:"))
+async def admin_menu(message: Message):
     await message.answer("Admin menusi:", reply_markup=admin_btn())
 

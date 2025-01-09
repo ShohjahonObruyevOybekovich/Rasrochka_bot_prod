@@ -1,12 +1,9 @@
-from tg_bot.buttons.reply import admin_btn
-
-
 #admin_handlers
 
 from tg_bot.handlers.admin.add_order import *
 # from tg_bot.handlers.admin.add_payment import *
 from tg_bot.handlers.admin.next_payments import *
-from tg_bot.handlers.admin.start import *
+from tg_bot.handlers.start import *
 from tg_bot.handlers.admin.orders import *
 from tg_bot.handlers.admin.order_history import *
 from tg_bot.handlers.admin.statistics import *
