@@ -65,33 +65,34 @@ class SayqalSms:
         return response.json()
 
 
-# def send_sms1(phone_number, message):
-#     sms_service = SayqalSms()
-#     sms_service.send_sms(
-#         message=message,
-#         number=phone_number
-#     )
-#
-# active = [
-# "998977007109",
-# "+998977130280",
-# "+998998958558",
-# "+998990307995",
-# "+998931023234",
-# "+998973431462",
-# "+998991481222",
-# "+998935697979",
-# "+998935976055",
-# "+998977830201",
-# "+998991990087",
-# "+998998826267",
-# "+998991747762",
-# "+998974505771",
-# "+998946068939"
-# ]
-# active1 = ["+998948025101","+998886330124"]
-# for i in active1:
-#     send_sms1(phone_number=i, message=f"Assalomu alaykum, xurmatli mijoz!"
-# "@ab_nasiya_bot botini ishga tushirdik."
-# "Ushbu bot orqali to'lov va qarzlaringiz holatini real vaqtda nazorat qilishingiz mumkin. "
-# "To'liq ma'lumot uchun: +998901740280 (Alisher Sharabaev)")
+def send_sms1(phone_number, message):
+    sms_service = SayqalSms()
+    sms_service.send_sms(
+        message=message,
+        number=phone_number
+    )
+
+active = [
+"998977007109",
+"+998977130280",
+"+998998958558",
+"+998990307995",
+"+998931023234",
+"+998973431462",
+"+998991481222",
+"+998935697979",
+"+998935976055",
+"+998977830201",
+"+998991990087",
+"+998998826267",
+"+998991747762",
+"+998974505771",
+"+998946068939",
+"+998886330124"
+]
+active1 = ["+998948025101","+998886330124"]
+for i in active:
+    send_sms1(phone_number=i, message=f"Assalomu alaykum, xurmatli mijoz!\n"
+"https://t.me/ab_nasiya_bot botini ishga tushirdik."
+"Ushbu bot orqali to'lov va qarzlaringiz holatini real vaqtda nazorat qilishingiz mumkin. "
+"To'liq ma'lumot uchun: +998901740280 (Alisher Sharabaev)")

@@ -295,7 +295,7 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                 message=f"AB Nasiya bot:\n"
                         f"To'lov qo'shildi: {amount} dollar.\n"
                         f"Qolgan to'lov miqdori: {remaining_balance} dollar.\n"
-                        f"Qo'shimcha ma'lumotlar uchun @ab_nasiya_bot ga a'zo bo'ling!",
+                        f"Qo'shimcha ma'lumotlar uchun https://t.me/ab_nasiya_bot ga a'zo bo'ling!",
                 number=installment.user.phone
             )
 
@@ -312,7 +312,7 @@ async def handle_payment_amount(message: Message, state: FSMContext):
                 message=f"AB Nasiya bot:\n"
                 f"To'lov qo'shildi: {amount} dollar.\n"
                 f"Qolgan to'lov miqdori: {remaining_balance} dollar.\n"
-                f"Qo'shimcha ma'lumotlar uchun @ab_nasiya_bot ga a'zo bo'ling!",
+                f"Qo'shimcha ma'lumotlar uchun https://t.me/ab_nasiya_bot ga a'zo bo'ling!",
                 number=installment.user.phone
             )
             sms = Sms()
