@@ -257,13 +257,17 @@ async def handle_payment_amount(message: Message, state: FSMContext):
             if user_chat_id:
                 await message.bot.send_message(
                     chat_id=installment.user.chat_id,
-                    text=f"Qarizdorlik yakunlandi!"
+                    text=f"<b>Hurmatli mijoz!</b>"  
+"Sizning nasiya savdoyingiz muvaffaqiyatli yakunlandi. Biz bilan hamkorlik qilganingiz uchun chuqur minnatdorchilik bildiramiz! 😊\n  "
+"Sizga qulay va ishonchli xizmat ko‘rsatish biz uchun muhim. Yana hamkorlik qilishdan mamnun bo‘lamiz! "
                 )
             else:
                 await message.answer("BU mijoz hali botdan foydalangani yo'q habarnoma sms orqali yuborildi!", reply_markup=admin_btn())
             sms_service = SayqalSms()
             sms_service.send_sms(
-                message="Qarizdorlik yakunlandi",
+                message=f"<b>Hurmatli mijoz!</b>"  
+"Sizning nasiya savdoyingiz muvaffaqiyatli yakunlandi. Biz bilan hamkorlik qilganingiz uchun chuqur minnatdorchilik bildiramiz! 😊\n  "
+"Sizga qulay va ishonchli xizmat ko‘rsatish biz uchun muhim. Yana hamkorlik qilishdan mamnun bo‘lamiz! ",
                 number=installment.user.phone
             )
             sms = Sms()
