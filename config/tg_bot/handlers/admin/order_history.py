@@ -51,10 +51,11 @@ async def command_start_handler(message: Message) -> None:
                     "Buyurtma statusi": installment.status if j == 0 else "",
                     "Avans": f"{installment.starter_payment}$" if j == 0 else "",
                     "Ustama foizi": f"{installment.additional_fee_percentage} %" if j == 0 else "",
-                    "Ustama miqdori": f"{installment.price * (installment.additional_fee_percentage / 100):.2f} $" if j == 0 else "",
+                    "Ustama miqdori": f"{(installment.price - installment.starter_payment ) * installment.additional_fee_percentage / 100  :.2f} $" if j == 0 else "",
                     "Asil narxi": f"{installment.price}$" if j == 0 else "",
                     "Ustama bilan xisoblangan narxi": f"{(overall_price + installment.starter_payment):.2f}$" if j == 0 else "",
-                    "To'liq so'mma": f"{(installment.price + installment.price * (installment.additional_fee_percentage / 100) + installment.starter_payment):.2f}" if j == 0 else "",
+                    "To'lanishi kerak bo'lgan summa": f"{ (installment.price - installment.starter_payment)
+                                                          + ((installment.price - installment.starter_payment ) * installment.additional_fee_percentage / 100) :.2f}" if j == 0 else "",
                     "Jami to'langan so'mma": f"{total_paid}$" if j == 0 else "",
                     "To‘lovlar": payment_history[j] if j < len(payment_history) else "",
                     "Payment Dates": installment.created_at.strftime("%d %B %Y") if j == 0 else "",
