@@ -93,8 +93,8 @@ async def command_start_handler(message: Message) -> None:
                 "Ustama bilan xisoblangan narxi": f"{(overall_price + installment.starter_payment):.2f}$" if i == 0 else "",
                 "To'liq so'mma " : f"{(installment.price + installment.price
                                       * (installment.additional_fee_percentage/100)+installment.starter_payment):.2f}" if i == 0 else "",
-                "Jami to'langan so'mma": f"{total_paid}$" ,
-                "To'lovlar": payment_history_str if i == 0 else "",
+                "Jami to'langan so'mma": f"{total_paid}$ " if i == 0 else "" ,
+                "To'lovlar": payment_history_str ,
                 "Payment Dates": "\n".join(payment_schedule) if i == 0 else "",  # Add the generated payment dates to the Excel data
                 "Yaratilgan sana": installment.created_at.strftime("%d %B %Y") if i == 0 else "",
             })
