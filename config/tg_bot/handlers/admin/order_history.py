@@ -84,6 +84,7 @@ async def command_start_handler(message: Message) -> None:
             "Jami to'langan so'mma": f"{total_paid}$",
             "To'lovlar": payment_history_str,
             "Payment Dates": "\n".join(payment_schedule),  # Add the generated payment dates to the Excel data
+            "Yaratilgan sana": installment.created_at.strftime("%d %B %Y"),
         })
 
     # Convert the list of dictionaries into a DataFrame
