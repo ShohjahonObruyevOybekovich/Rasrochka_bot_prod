@@ -96,7 +96,7 @@ async def payments_summary(message: Message):
     if upcoming_payments:
         response += "Keyingi 10 kunda tushadigan to'lovlar:\n\n"
         for payment in upcoming_payments:
-            paymanet_amount = payment.calculate_monthly_payment()
+            paymanet_amount = payment.  calculate_monthly_payment()
             paymanet_amount = round(paymanet_amount, 2)
 
             # Escape user data

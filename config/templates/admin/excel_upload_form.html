@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h2>📤 Upload Excel File</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="excel_file" accept=".xls,.xlsx" required>
+    <button type="submit" class="default">Upload</button>
+  </form>
+{% endblock %}

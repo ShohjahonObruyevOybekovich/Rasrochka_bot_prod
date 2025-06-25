@@ -30,7 +30,7 @@ async def command_start_handler(message: Message) -> None:
         total_paid = sum(payment.amount for payment in installment.payments.all())
 
         # Update the remaining balance (with interest)
-        remaining_balance_with_interest = total_price
+        remaining_balance_with_interest = total_paid
 
         # Calculate unpaid profit (interest on the remaining balance)
         unpaid_profit = interest_amount * (remaining_balance_with_interest / total_price)
@@ -42,7 +42,7 @@ async def command_start_handler(message: Message) -> None:
     # Generate summary report
     summary_report = (
         f"<b>Jami qolgan to'lovlar:</b> {total_remaining_price:.2f} $\n"
-        f"<b>Jami foyda:</b> {total_profit:.2f} $"
+        # f"<b>Jami foyda:</b> {total_profit:.2f} $"
     )
 
     # Send the report to the user

@@ -48,6 +48,7 @@ async def command_start_handler(message: Message) -> None:
                     "Mahsulotlar": "\n".join(
                         [f"{product.strip()} " for product in set(installment.product.split(","))]
                     ) if j == 0 else "",
+                    "Muddatli tulov muddati": f"{installment.payment_months} oy",
                     "Buyurtma statusi": installment.status if j == 0 else "",
                     "Avans": f"{installment.starter_payment}$" if j == 0 else "",
                     "Ustama foizi": f"{installment.additional_fee_percentage} %" if j == 0 else "",
