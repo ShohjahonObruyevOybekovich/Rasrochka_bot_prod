@@ -86,7 +86,7 @@ class ExcelUploadAdmin(admin.ModelAdmin):
 
                         # Handle created date - matching command logic
                         date = str(row.get("Yaratilgan vaqti")).strip() if pd.notna(row.get("Yaratilgan vaqti")) else None
-                        created_date = datetime.strptime(date, "%d-%B-%Y").date() if date else first_payed_date
+                        created_date = datetime.strptime(date, "%d-%B-%Y %H:%M") if date else first_payed_date
 
                         status = 'COMPLETED' if str(row['Buyurtma statusi']).strip().upper() == 'COMPLETED' else 'ACTIVE'
 
@@ -126,7 +126,7 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                                     if ":" in entry:
                                         date_part, amount_part = entry.split(":")
                                         date_str = date_part.strip() + f" {last_start_date.year}"
-                                        payment_date   = datetime.strptime(date_str, "%d-%B %Y").date()
+                                        payment_date = datetime.strptime(date_str, "%d-%B %Y").date()
                                         amount = Decimal(amount_part.replace("$", "").strip())
 
                                         Payment.objects.create(
