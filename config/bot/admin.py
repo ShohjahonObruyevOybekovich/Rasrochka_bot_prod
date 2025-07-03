@@ -62,7 +62,7 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                     name = str(row.get('Mijoz')).strip() if pd.notna(row.get('Mijoz')) else None
                     category_name = str(row.get('Mahsulotlar guruhi')).strip() if pd.notna(row.get('Mahsulotlar guruhi')) else None
                     product = str(row.get('Mahsulotlar')).strip() if pd.notna(row.get('Mahsulotlar')) else None
-                    payment_month = str(row.get("To'lov oylari")).strip() if pd.notna(
+                    payment_month = int(row.get("To'lov oylari")).strip() if pd.notna(
                         row.get("To'lov oylari")) else None
                     # If row has a user and installment info
                     if phone and name and product:
