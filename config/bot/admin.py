@@ -72,11 +72,10 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                         row.get("To'lov oylari")) else None
                     payment_month = int(float(payment_month)) if payment_month is not None else None
 
+                    print(row)
 
                     if phone and name and product:
                         user, _ = User.objects.get_or_create(phone=phone.split(".",)[0], defaults={"full_name": name})
-
-                        print(category_name)
 
                         category, _ = Category.objects.get_or_create(name=category_name)
 
@@ -136,16 +135,40 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                         last_installment = installment
                         last_start_date = first_payed_date
 
-                    # Handle To'lovlar even if it's a continuation row - matching command logic
+
                     if pd.notna(row.get("To'lovlar")):
                         payment_text = str(row["To'lovlar"])
+
+                        print("--------------")
+                        print(payment_text)
+
                         if payment_text and ":" in payment_text:
                             entries = payment_text.split('\n')
+                            UZBEK_MONTHS = {
+                                "Yanvar": "January",
+                                "Fevral": "February",
+                                "Mart": "March",
+                                "Aprel": "April",
+                                "May": "May",
+                                "Iyun": "June",
+                                "Iyul": "July",
+                                "Avgust": "August",
+                                "Sentabr": "September",
+                                "Oktabr": "October",
+                                "Noyabr": "November",
+                                "Dekabr": "December"
+                            }
                             for entry in entries:
                                 try:
                                     if ":" in entry:
                                         date_part, amount_part = entry.split(":")
-                                        date_str = date_part.strip() + f" {last_start_date.year}"
+                                        month_uz = date_part.strip().split("-")[1]
+
+                                        if not month_uz:
+                                            raise ValueError(f"Unknown Uzbek month: {month_uz}")
+
+                                        day = date_part.strip().split("-")[0]
+                                        date_str = f"{day}-{month_uz} {last_start_date.year}"
                                         payment_date = datetime.strptime(date_str, "%d-%B %Y").date()
                                         amount = Decimal(amount_part.replace("$", "").strip())
 
