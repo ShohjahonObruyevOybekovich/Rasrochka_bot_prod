@@ -1,4 +1,6 @@
 from django.contrib import admin
+from pandas import to_datetime
+
 from bot.models import User, Installment, Payment, Sms, Category
 
 # bot/admin.py
@@ -79,19 +81,18 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                         category, _ = Category.objects.get_or_create(name=category_name)
 
                         # Handle first payment date logic - matching command logic
-                        first_payed_date = row.get("Payment Dates")
-                        if pd.notna(first_payed_date):
+                        def try_parse_date(val):
                             try:
-                                first_payed_date = datetime.strptime(str(first_payed_date).strip(), "%d %B %Y")
-                            except ValueError:
-                                messages.error(request, f"Invalid date format: {first_payed_date}")
-                                first_payed_date = None
-                        else:
+                                return to_datetime(str(val).strip(), dayfirst=True).to_pydatetime()
+                            except Exception:
+                                return None
+
+                        first_payed_date = row.get("Payment Dates")
+                        first_payed_date = try_parse_date(first_payed_date)
+
+                        if not first_payed_date:
                             created_val = row.get("Yaratilgan vaqti")
-                            if pd.notna(created_val):
-                                first_payed_date = datetime.strptime(str(created_val).strip(), "%d %B %Y")
-                            else:
-                                first_payed_date = None
+                            first_payed_date = try_parse_date(created_val)
 
                         # Handle created date - matching command logic
 
