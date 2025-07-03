@@ -91,11 +91,18 @@ class ExcelUploadAdmin(admin.ModelAdmin):
                                 first_payed_date = None
 
                         # Handle created date - matching command logic
-                        date = str(row.get("Yaratilgan vaqti")).strip() if pd.notna(row.get("Yaratilgan vaqti")) else None
 
-                        print(date)
+                        def parse_flexible_date(date_str):
+                            for fmt in ("%Y-%m-%d %H:%M:%S", "%d/%m/%Y", "%d/%m/%Y %H:%M", "%Y-%m-%d"):
+                                try:
+                                    return datetime.strptime(date_str, fmt)
+                                except ValueError:
+                                    continue
+                            raise ValueError(f"Unsupported date format: {date_str}")
 
-                        created_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S") if date else first_payed_date
+                        date_str = str(row.get("Yaratilgan vaqti")).strip() if pd.notna(
+                            row.get("Yaratilgan vaqti")) else None
+                        created_date = parse_flexible_date(date_str) if date_str else first_payed_date
 
                         status = 'COMPLETED' if str(row['Buyurtma statusi']).strip().upper() == 'COMPLETED' else 'ACTIVE'
 
