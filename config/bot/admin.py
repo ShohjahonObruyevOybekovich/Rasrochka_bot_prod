@@ -59,13 +59,18 @@ class ExcelUploadAdmin(admin.ModelAdmin):
 
                 for _, row in df.iterrows():
                     phone = str(row.get('Telefon raqami')).strip() if pd.notna(row.get('Telefon raqami')) else None
+
                     name = str(row.get('Mijoz')).strip() if pd.notna(row.get('Mijoz')) else None
+
                     category_name = str(row.get('Mahsulotlar guruhi')).strip() if pd.notna(row.get('Mahsulotlar guruhi')) else None
+
                     product = str(row.get('Mahsulotlar')).strip() if pd.notna(row.get('Mahsulotlar')) else None
+
                     payment_month = str(row.get("To'lov oylari")).strip() if pd.notna(
                         row.get("To'lov oylari")) else None
-                    payment_month = int(payment_month)
-                    # If row has a user and installment info
+                    payment_month = int(float(payment_month)) if payment_month is not None else None
+
+
                     if phone and name and product:
                         user, _ = User.objects.get_or_create(phone=phone.split(".",)[0], defaults={"full_name": name})
                         category, _ = Category.objects.get_or_create(name=category_name)
