@@ -73,6 +73,9 @@ class ExcelUploadAdmin(admin.ModelAdmin):
 
                     if phone and name and product:
                         user, _ = User.objects.get_or_create(phone=phone.split(".",)[0], defaults={"full_name": name})
+
+                        print(category_name)
+
                         category, _ = Category.objects.get_or_create(name=category_name)
 
                         # Handle first payment date logic - matching command logic
