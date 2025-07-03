@@ -86,7 +86,7 @@ class ExcelUploadAdmin(admin.ModelAdmin):
 
                         # Handle created date - matching command logic
                         date = str(row.get("Yaratilgan vaqti")).strip() if pd.notna(row.get("Yaratilgan vaqti")) else None
-                        created_date = datetime.strptime(date, "%d-%B-%Y %H:%M") if date else first_payed_date
+                        created_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S") if date else first_payed_date
 
                         status = 'COMPLETED' if str(row['Buyurtma statusi']).strip().upper() == 'COMPLETED' else 'ACTIVE'
 
